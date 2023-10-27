@@ -181,18 +181,25 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   public List<Object> handleResultSets(Statement stmt) throws SQLException {
     ErrorContext.instance().activity("handling results").object(mappedStatement.getId());
 
+    // 多 ResultSet 的结果集， 每个 ResultSet 对应一个 Object 对象，而实际上，每个 Object 是 List<Object>对象
+    // 在不考虑存储过程的多 ResultSet 情况，普通的查询实际就是一个 ResultSet, 也就是说 multipleResults 最多就一个元素
     final List<Object> multipleResults = new ArrayList<>();
 
     int resultSetCount = 0;
-    ResultSetWrapper rsw = getFirstResultSet(stmt);//结果集的第一个结果
-
+    // 结果集的第一个结果，并封装为ResultSetWrapper对象
+    ResultSetWrapper rsw = getFirstResultSet(stmt);
+    // 获得 ResultMap 数组
+    // 在不考虑存储过程的多 ResultSet 情况，普通的查询实际就是一个 ResultSet, 也就是说 resultMaps 最多就一个元素
     List<ResultMap> resultMaps = mappedStatement.getResultMaps();
     int resultMapCount = resultMaps.size();
     validateResultMapsCount(rsw, resultMapCount);
+    // 如果查询出来的是多个数据集，继续封装数据
     while (rsw != null && resultMapCount > resultSetCount) {
       ResultMap resultMap = resultMaps.get(resultSetCount);
+      // 处理 ResultSet, 将结果添加到 multipleResults 中，
       handleResultSet(rsw, resultMap, multipleResults, null);//根据resultMap处理rsw生成java对象
-      rsw = getNextResultSet(stmt); //获取结果集的下一个结果
+      rsw = getNextResultSet(stmt); // 获取结果集的下一个结果
+      // 清理
       cleanUpAfterHandlingResultSet();
       resultSetCount++;
     }
@@ -292,21 +299,29 @@ public class DefaultResultSetHandler implements ResultSetHandler {
     }
   }
 
+  // 处理 ResultSet，将结果添加到 multipleResults 中
   private void handleResultSet(ResultSetWrapper rsw, ResultMap resultMap, List<Object> multipleResults, ResultMapping parentMapping) throws SQLException {
     try {
+      // 暂时忽略，只有存储过程的情况调用该方法
       if (parentMapping != null) {
         handleRowValues(rsw, resultMap, null, RowBounds.DEFAULT, parentMapping);
       } else {
+        // 如果没有自定义 resultHandler，则创建默认的 DefaultResultHandler
         if (resultHandler == null) {
+          // 创建 DefaultResultHandler
           DefaultResultHandler defaultResultHandler = new DefaultResultHandler(objectFactory);
+          // 处理 ResultSet 返回的每一行 Row
           handleRowValues(rsw, resultMap, defaultResultHandler, rowBounds, null);
+          // 添加 defaultResultHandler 的处理器的结果到 multipleResults 中
           multipleResults.add(defaultResultHandler.getResultList());
         } else {
+          // 处理 ResultSet 返回的每一行 Row
           handleRowValues(rsw, resultMap, resultHandler, rowBounds, null);
         }
       }
     } finally {
       // issue #228 (close resultsets)
+      // 关闭 ResultSet 对象
       closeResultSet(rsw.getResultSet());
     }
   }
@@ -591,15 +606,20 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   //
 
   private Object createResultObject(ResultSetWrapper rsw, ResultMap resultMap, ResultLoaderMap lazyLoader, String columnPrefix) throws SQLException {
+    // useConstructorMappings，表示是否使用构造方法创建该对象，此处将其充值
     this.useConstructorMappings = false; // reset previous mapping result
     final List<Class<?>> constructorArgTypes = new ArrayList<>();
     final List<Object> constructorArgs = new ArrayList<>();
+    // 创建返回的结果映射的真实对象
     Object resultObject = createResultObject(rsw, resultMap, constructorArgTypes, constructorArgs, columnPrefix);
     if (resultObject != null && !hasTypeHandlerForResultObject(rsw, resultMap.getType())) {
+      // 如果有内嵌对象，并且开启了延迟查询，则创建结果对象的代理对象
       final List<ResultMapping> propertyMappings = resultMap.getPropertyResultMappings();
       for (ResultMapping propertyMapping : propertyMappings) {
         // issue gcode #109 && issue #149
+        // 判断属性有没配置嵌套查询，如果有就创建代理对象
         if (propertyMapping.getNestedQueryId() != null && propertyMapping.isLazy()) {
+          // 创建延迟加载代理对象
           resultObject = configuration.getProxyFactory().createProxy(resultObject, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
           break;
         }

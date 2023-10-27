@@ -39,9 +39,24 @@ public class TransactionalCache implements Cache {
 
   private static final Log log = LogFactory.getLog(TransactionalCache.class);
 
+  /**
+   * 委托的 Cache 对象
+   * 实际上就是二级缓存对象
+   */
   private final Cache delegate;
+  /**
+   * 提交时，清空 {@link #delegate}
+   * 初始化时，设置该值为 false
+   * 清理后{@link #clear()} 时，该值为 true, 表示持续处于清空状态
+   */
   private boolean clearOnCommit;
+  /**
+   * 在事务被提交之前，所有数据库中查询的结果将缓存在此集合中
+   */
   private final Map<Object, Object> entriesToAddOnCommit;
+  /**
+   * 当事务被提交之前，当缓存未命中时， 将 Cachekey 存储到该集合中
+   */
   private final Set<Object> entriesMissedInCache;
 
   public TransactionalCache(Cache delegate) {
@@ -64,6 +79,7 @@ public class TransactionalCache implements Cache {
   @Override
   public Object getObject(Object key) {
     // issue #116
+    // 在二级缓存中取
     Object object = delegate.getObject(key);
     if (object == null) {
       entriesMissedInCache.add(key);
@@ -92,10 +108,15 @@ public class TransactionalCache implements Cache {
     entriesToAddOnCommit.clear();
   }
 
+  /**
+   * 事务提交时将 TransactionalCache 值放入到 二级缓存 Cache 中
+   */
   public void commit() {
+    // 如果 clearOnCommit 为 true ,则清空 delegate 缓存
     if (clearOnCommit) {
       delegate.clear();
     }
+    // 将 entriesToAddOnCommit,entriesMissedInCache 刷入 delegate(cache) 中
     flushPendingEntries();
     reset();
   }
@@ -113,6 +134,7 @@ public class TransactionalCache implements Cache {
 
   private void flushPendingEntries() {
     for (Map.Entry<Object, Object> entry : entriesToAddOnCommit.entrySet()) {
+      //  在这⾥真正的将entriesToAddOnCommit的对象逐个添加到delegate中，只有这时,二级缓存才真正的⽣效
       delegate.putObject(entry.getKey(), entry.getValue());
     }
     for (Object entry : entriesMissedInCache) {

@@ -11,6 +11,7 @@ public class User implements Serializable{
 
     private Long id ;
     private String userName ;
+    private Integer age;
     private Date createTime;
 
 
@@ -38,12 +39,20 @@ public class User implements Serializable{
         this.createTime = createTime;
     }
 
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
 
     @Override
     public String toString() {
         return "User{" +
                 "id=" + id +
                 ", userName='" + userName + '\'' +
+                ", age=" + age +
                 ", createTime=" + createTime +
                 '}';
     }

@@ -54,6 +54,16 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
     }
   }
 
+  /**
+   * 接口实现
+   * @param target      目标结果对象
+   * @param lazyLoader  延迟加载对象
+   * @param configuration 全局配置
+   * @param objectFactory 对象工程
+   * @param constructorArgTypes 构造参数对象
+   * @param constructorArgs     构造参数值
+   * @return
+   */
   @Override
   public Object createProxy(Object target, ResultLoaderMap lazyLoader, Configuration configuration, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
     return EnhancedResultObjectProxyImpl.createProxy(target, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
@@ -63,18 +73,28 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
     return EnhancedDeserializationProxyImpl.createProxy(target, unloadedProperties, objectFactory, constructorArgTypes, constructorArgs);
   }
 
+  /**
+   * 创建代理对象
+   * @param type
+   * @param callback
+   * @param constructorArgTypes
+   * @param constructorArgs
+   * @return
+   */
   static Object crateProxy(Class<?> type, MethodHandler callback, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
 
     ProxyFactory enhancer = new ProxyFactory();
     enhancer.setSuperclass(type);
 
     try {
+      // 通过获取对象⽅法，判断是否存在该⽅法
       type.getDeclaredMethod(WRITE_REPLACE_METHOD);
       // ObjectOutputStream will call writeReplace of objects returned by writeReplace
       if (LogHolder.log.isDebugEnabled()) {
         LogHolder.log.debug(WRITE_REPLACE_METHOD + " method was found on bean " + type + ", make sure it returns this");
       }
     } catch (NoSuchMethodException e) {
+      // 没找到该⽅法，实现接⼝
       enhancer.setInterfaces(new Class[]{WriteReplaceInterface.class});
     } catch (SecurityException e) {
       // nothing to do here
@@ -84,10 +104,12 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
     Class<?>[] typesArray = constructorArgTypes.toArray(new Class[constructorArgTypes.size()]);
     Object[] valuesArray = constructorArgs.toArray(new Object[constructorArgs.size()]);
     try {
+      // 创建新的代理对象
       enhanced = enhancer.create(typesArray, valuesArray);
     } catch (Exception e) {
       throw new ExecutorException("Error creating lazy proxy.  Cause: " + e, e);
     }
+    // 设置代理执⾏器
     ((Proxy) enhanced).setHandler(callback);
     return enhanced;
   }
@@ -112,19 +134,43 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
       this.constructorArgs = constructorArgs;
     }
 
+    /**
+     *
+     * @param target
+     * @param lazyLoader
+     * @param configuration
+     * @param objectFactory
+     * @param constructorArgTypes
+     * @param constructorArgs
+     * @return
+     */
     public static Object createProxy(Object target, ResultLoaderMap lazyLoader, Configuration configuration, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
       final Class<?> type = target.getClass();
       EnhancedResultObjectProxyImpl callback = new EnhancedResultObjectProxyImpl(type, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
+      // 创建代理对象
       Object enhanced = crateProxy(type, callback, constructorArgTypes, constructorArgs);
+      // 将 target 的属性，复制到 enhanced 中
       PropertyCopier.copyBeanProperties(type, target, enhanced);
       return enhanced;
     }
 
+    /**
+     * 代理对象执行
+     * @param enhanced    原对象
+     * @param method      原对象方法
+     * @param methodProxy 代理方法
+     * @param args        方法参数
+     * @return
+     * @throws Throwable
+     */
     @Override
     public Object invoke(Object enhanced, Method method, Method methodProxy, Object[] args) throws Throwable {
       final String methodName = method.getName();
       try {
         synchronized (lazyLoader) {
+          // 序列化会调用此方法
+          // 如果一个序列化类中含有Object writeReplace()方法，那么实际序列化的对象将是作为writeReplace方法返回值的对象，
+          // 而且序列化过程的依据是实际被序列化对象的序列化实现。
           if (WRITE_REPLACE_METHOD.equals(methodName)) {
             Object original;
             if (constructorArgTypes.isEmpty()) {
@@ -140,11 +186,14 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
             }
           } else {
             if (lazyLoader.size() > 0 && !FINALIZE_METHOD.equals(methodName)) {
+              // 加载所有延迟加载的属性
               if (aggressive || lazyLoadTriggerMethods.contains(methodName)) {
                 lazyLoader.loadAll();
+              // 如果调用了 setter 方法，则不在使用延迟加载
               } else if (PropertyNamer.isSetter(methodName)) {
                 final String property = PropertyNamer.methodToProperty(methodName);
                 lazyLoader.remove(property);
+              // 如果调用了 getter 方法，则执行延迟加载
               } else if (PropertyNamer.isGetter(methodName)) {
                 final String property = PropertyNamer.methodToProperty(methodName);
                 if (lazyLoader.hasLoader(property)) {
@@ -177,6 +226,15 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
       return enhanced;
     }
 
+    /**
+     * 代理对象执行
+     * @param enhanced    原对象
+     * @param method      原对象方法
+     * @param methodProxy 代理方法
+     * @param args        方法参数
+     * @return
+     * @throws Throwable
+     */
     @Override
     public Object invoke(Object enhanced, Method method, Method methodProxy, Object[] args) throws Throwable {
       final Object o = super.invoke(enhanced, method, args);

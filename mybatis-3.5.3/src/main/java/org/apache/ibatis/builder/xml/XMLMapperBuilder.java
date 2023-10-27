@@ -179,7 +179,7 @@ public class XMLMapperBuilder extends BaseBuilder {
        */
       sqlElement(context.evalNodes("/mapper/sql"));
       /**
-       * 解析我们的select | insert |update |delete节点
+       * 解析我们的select | insert |update |delete节点，并且会将生产的Cache对象包装到对应的 MapperStatement 中
        * 解析到org.apache.ibatis.session.Configuration#mappedStatements
        */
       buildStatementFromContext(context.evalNodes("select|insert|update|delete"));
@@ -205,8 +205,6 @@ public class XMLMapperBuilder extends BaseBuilder {
    * @param list:所有的select|update|delte|insert节点
    * @param requiredDatabaseId:判断有没有数据库厂商Id
    * @return:
-   * @exception:
-   * @date:2019/9/5 21:35
    */
   private void buildStatementFromContext(List<XNode> list, String requiredDatabaseId) {
     /**
@@ -317,15 +315,15 @@ public class XMLMapperBuilder extends BaseBuilder {
    */
   private void cacheElement(XNode context) {
     if (context != null) {
-      //解析cache节点的type属性
+      //解析cache节点的type属性,这里可以是实现自定义的cache的实现类，比如RedisCache,如果没有自定义，默认是 PERPETUAL
       String type = context.getStringAttribute("type", "PERPETUAL");
       // 根据别名（或完整限定名）  加载为Class
       Class<? extends Cache> typeClass = typeAliasRegistry.resolveAlias(type);
-      /*获取缓存过期策略:默认是LRU
-      LRU – 最近最少使用：移除最长时间不被使用的对象。（默认）
-      FIFO – 先进先出：按对象进入缓存的顺序来移除它们。
-      SOFT – 软引用：基于垃圾回收器状态和软引用规则移除对象。
-      WEAK – 弱引用：更积极地基于垃圾收集器状态和弱引用规则移除对象。
+      /*  获取缓存过期策略:默认是LRU
+        LRU – 最近最少使用：移除最长时间不被使用的对象。（默认）
+        FIFO – 先进先出：按对象进入缓存的顺序来移除它们。
+        SOFT – 软引用：基于垃圾回收器状态和软引用规则移除对象。
+        WEAK – 弱引用：更积极地基于垃圾收集器状态和弱引用规则移除对象。
       */
       String eviction = context.getStringAttribute("eviction", "LRU");
       Class<? extends Cache> evictionClass = typeAliasRegistry.resolveAlias(eviction);

@@ -48,9 +48,11 @@ public class DynamicSqlSource implements SqlSource {
     SqlSourceBuilder sqlSourceParser = new SqlSourceBuilder(configuration);
     // 2.接下来处理 处理sql中的#{...}
     Class<?> parameterType = parameterObject == null ? Object.class : parameterObject.getClass();
-    // 怎么处理呢？ 很简单， 就是拿到#{}中的内容 封装为parameterMapper，  替换成?
+    // 怎么处理呢？ 很简单， 就是拿到#{}中的内容 封装为parameterMapper，  替换成?,
+    // 在最后设置参数的时候就可以拿到队形转换器设置对应的方法  set{Type}()
     SqlSource sqlSource = sqlSourceParser.parse(context.getSql(), parameterType, context.getBindings());
     BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
+    // 将传入的参数设置到 boundSql 里
     context.getBindings().forEach(boundSql::setAdditionalParameter);
     return boundSql;
   }

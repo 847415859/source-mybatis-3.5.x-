@@ -51,18 +51,11 @@ public class MapperProxyFactory<T> {
    * 方法实现说明:创建我们的UserMapper接口代理
    * @author:xsls
    * @param sqlSession:sqlSessionTemplate
-   * @return:
-   * @exception:
-   * @date:2019/8/22 20:46
    */
   public T newInstance(SqlSession sqlSession) {
-    /**
-     * 创建我们的代理对象
-     */
+    // 创建我们的代理对象
     final MapperProxy<T> mapperProxy = new MapperProxy<>(sqlSession, mapperInterface, methodCache);
-    /**
-     * 创建我们的Mapper代理对象返回
-     */
+    // 创建我们的Mapper代理对象返回
     return newInstance(mapperProxy);
   }
 

@@ -72,6 +72,7 @@ public class CachingExecutor implements Executor {
 
   @Override
   public int update(MappedStatement ms, Object parameterObject) throws SQLException {
+    // 如果需要则清空缓存
     flushCacheIfRequired(ms);
     return delegate.update(ms, parameterObject);
   }
@@ -83,16 +84,12 @@ public class CachingExecutor implements Executor {
    * @param parameterObject:参数对象
    * @param rowBounds :mybaits的逻辑分页对象 TODO？？？？？
    * @param resultHandler:结果处理器对象
-   * @return:
-   * @exception:
-   * @date:2019/9/9 20:39
    */
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
-    /**
-     * 通过参数对象解析我们的sql详细信息1339025938:1570540512:com.tuling.mapper.selectById:0:2147483647:select id,user_name,create_time from t_user where id=?:1:development
-     */
+    // 通过参数对象解析我们的sql select id,user_name,create_time from t_user where id=?:1:development
     BoundSql boundSql = ms.getBoundSql(parameterObject);
+    // 创建缓存 Cacgekey
     CacheKey key = createCacheKey(ms, parameterObject, rowBounds, boundSql);
     return query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
   }
@@ -108,34 +105,30 @@ public class CachingExecutor implements Executor {
       throws SQLException {
     /**
      * 判断我们我们的mapper中是否开启了二级缓存<cache></cache>
+     * 从 MappedStatement 中获取缓存，其获取到的缓存就是在 <mapper/> 标签中解析并创建到的 Cache,它存放在 Configuration 中一份，
+     * 也会放置到对应的 MapperStatement 中
      */
     Cache cache = ms.getCache();
-    /**
-     * 判断是否配置了<cache></cache>
-     */
+    // 判断是否配置了<cache></cache>
     if (cache != null) {
-      //判断是否需要刷新缓存
+      // 判断是否需要刷新缓存  flushCache=true, 如果为true,每次查询之前都会清空缓存
       flushCacheIfRequired(ms);
       if (ms.isUseCache() && resultHandler == null) {
         ensureNoOutParams(ms, boundSql);
-        /**
-         * 先去二级缓存中获取
-         */
+        // 先去二级缓存中获取
         @SuppressWarnings("unchecked")
         List<E> list = (List<E>) tcm.getObject(cache, key);
-        /**
-         * 二级缓存中没有获取到
-         */
+        // 二级缓存中没有获取到
         if (list == null) {
-          //通过查询数据库去查询
+          // 通过查询数据库去查询（查询逻辑先查询一级缓存，如果缓存中有，返回，没有在去查询数据库）
           list = delegate.query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
-          //加入到二级缓存中
+          // 缓存查询结果，并不是直接将数据放置到二级缓存中，二级缓存要生效，需要执行 commit 方法，
           tcm.putObject(cache, key, list); // issue #578 and #116
         }
         return list;
       }
     }
-    //没有整合二级缓存,直接去查询
+    // 没有整合二级缓存,直接去查询
     return delegate.query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
   }
 
@@ -193,6 +186,7 @@ public class CachingExecutor implements Executor {
 
   private void flushCacheIfRequired(MappedStatement ms) {
     Cache cache = ms.getCache();
+    // SQL需设置flushCache="true" 才会执⾏清空 || 或者是 非select标签
     if (cache != null && ms.isFlushCacheRequired()) {
       tcm.clear(cache);
     }

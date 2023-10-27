@@ -58,9 +58,11 @@ public class SimpleExecutor extends BaseExecutor {
     Statement stmt = null;
     try {
       Configuration configuration = ms.getConfiguration();
+      // 创建 statementHandler 执行器，处理 mybatis sql业务执行
       StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
       // 拿到连接和statement
       stmt = prepareStatement(handler, ms.getStatementLog());
+      // 真正执sql
       return handler.query(stmt, resultHandler);
     } finally {
       closeStatement(stmt);
@@ -83,9 +85,11 @@ public class SimpleExecutor extends BaseExecutor {
 
   private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
+    // 获取 Connection 对象，默认获取 Envriment 中配置的数据源的 DataSource 的 Connection对象，并设置隔离级别
     Connection connection = getConnection(statementLog);
+    // 获取 Statement 或者 PreparedStatement 对象
     stmt = handler.prepare(connection, transaction.getTimeout());
-    // 处理参数
+    // 设置SQL上的参数，例如将 PreparedStatement 对象上的占位符
     handler.parameterize(stmt);
     return stmt;
   }

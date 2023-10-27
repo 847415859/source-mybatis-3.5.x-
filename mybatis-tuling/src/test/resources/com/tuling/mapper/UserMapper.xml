@@ -21,13 +21,13 @@
         </where>
     </select>
 
-    <select id="updateForName"  >
-        update t_user
-        <set>
-            ,user_name=#{arg1}
-        </set>
-        where id=#{arg0}
-    </select>
+<!--    <update id="updateForName">-->
+<!--        update t_user-->
+<!--        <set>-->
+<!--            ,user_name=#{arg1}-->
+<!--        </set>-->
+<!--        where id=#{arg0}-->
+<!--    </update>-->
     <!--
       动态sql数据源  需要在调用crud 解析sql
       静态sql数据源        解析CURD节点的就会把sql解析好

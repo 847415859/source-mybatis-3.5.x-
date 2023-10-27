@@ -44,6 +44,7 @@ public final class MappedStatement {
   private Cache cache;//缓存
   private ParameterMap parameterMap;
   private List<ResultMap> resultMaps;
+  // 是否强制清空二级缓存
   private boolean flushCacheRequired;
   private boolean useCache;//是否使用缓存，默认为true
   private boolean resultOrdered;//结果是否排序
@@ -294,6 +295,7 @@ public final class MappedStatement {
   }
 
   public BoundSql getBoundSql(Object parameterObject) {
+    // 拼接sqlNode,替换替换符 #{}
     BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
     if (parameterMappings == null || parameterMappings.isEmpty()) {

@@ -76,8 +76,6 @@ public class DefaultSqlSession implements SqlSession {
    * @param statement:我们的statementId(com.tuling.mapper.EmployeeMapper.findOne)
    * @param parameter:调用时候的参数
    * @return: T 返回结果
-   * @exception:
-   * @date:2019/9/9 20:26
    */
   @Override
   public <T> T selectOne(String statement, Object parameter) {
@@ -177,11 +175,7 @@ public class DefaultSqlSession implements SqlSession {
   @Override
   public <E> List<E> selectList(String statement, Object parameter, RowBounds rowBounds) {
     try {
-      /**
-       * 第一步：通过我们的statement去我们的全局配置类中获取MappedStatement
-       *
-       * CRUD
-       */
+      // 1、通过我们的statement去我们的全局配置类中获取MappedStatement（初始化已解析放置到全局配置 Configuration 中）
       MappedStatement ms = configuration.getMappedStatement(statement);
       /**
        * 通过执行器去执行我们的sql对象
@@ -236,8 +230,11 @@ public class DefaultSqlSession implements SqlSession {
   @Override
   public int update(String statement, Object parameter) {
     try {
+      // 标记 dirty，表示执行过写操作
       dirty = true;
+      // 获取 MappedStatement
       MappedStatement ms = configuration.getMappedStatement(statement);
+      // 执行更新操作
       return executor.update(ms, wrapCollection(parameter));
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error updating database.  Cause: " + e, e);
@@ -265,6 +262,7 @@ public class DefaultSqlSession implements SqlSession {
   public void commit(boolean force) {
     try {
       executor.commit(isCommitOrRollbackRequired(force));
+      // 清除执行标识
       dirty = false;
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error committing transaction.  Cause: " + e, e);

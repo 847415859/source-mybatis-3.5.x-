@@ -28,6 +28,14 @@ public final class PropertyNamer {
     // Prevent Instantiation of Static Class
   }
 
+  /**
+   * 获取属性名称
+   * 例如 ：  getId  =>  id
+   *         setUsername => username
+   *         isSubmit  => submit
+   * @param name
+   * @return
+   */
   public static String methodToProperty(String name) {
     if (name.startsWith("is")) {
       name = name.substring(2);

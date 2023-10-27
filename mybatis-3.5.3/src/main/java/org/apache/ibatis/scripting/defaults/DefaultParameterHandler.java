@@ -76,17 +76,18 @@ public class DefaultParameterHandler implements ParameterHandler {
           } else if (typeHandlerRegistry.hasTypeHandler(parameterObject.getClass())) {
             value = parameterObject;
           } else {
-            // 一般情况是个POJO，  需要根据属性名通过反射拿到对象中的属性值
+            // 一般情况是个POJO，  需要根据属性名通过反射（属性处理器）拿到对象中的属性值
             MetaObject metaObject = configuration.newMetaObject(parameterObject);
             value = metaObject.getValue(propertyName);
           }
+          // 获取 typeHandler 和 jdbcType 属性
           TypeHandler typeHandler = parameterMapping.getTypeHandler(); // 这个类型处理器是在解析BoundSql的时候就解析好了的
           JdbcType jdbcType = parameterMapping.getJdbcType();
           if (value == null && jdbcType == null) {
             jdbcType = configuration.getJdbcTypeForNull();
           }
           try {
-            // 通过类型处理器设置参数
+            // 通过类型处理器设置占位符 ? 参数
             typeHandler.setParameter(ps, i + 1, value, jdbcType);
           } catch (TypeException | SQLException e) {
             throw new TypeException("Could not set parameters for mapping: " + parameterMapping + ". Cause: " + e, e);

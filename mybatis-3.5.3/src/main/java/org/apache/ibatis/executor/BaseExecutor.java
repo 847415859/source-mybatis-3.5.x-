@@ -273,6 +273,7 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Cannot commit, transaction is already closed");
     }
+    // 清除一级缓存
     clearLocalCache();
     flushStatements();
     if (required) {
@@ -357,12 +358,16 @@ public abstract class BaseExecutor implements Executor {
 
   private <E> List<E> queryFromDatabase(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
     List<E> list;
+    // 在一级缓存中存放执行的标识符
     localCache.putObject(key, EXECUTION_PLACEHOLDER);
     try {
+      // 执行实现类中具体的查询逻辑
       list = doQuery(ms, parameter, rowBounds, resultHandler, boundSql);
     } finally {
+      // 清除一级缓存中的执行标识符
       localCache.removeObject(key);
     }
+    // 将查询结果防止到一级缓存中
     localCache.putObject(key, list);
     if (ms.getStatementType() == StatementType.CALLABLE) {
       localOutputParameterCache.putObject(key, parameter);

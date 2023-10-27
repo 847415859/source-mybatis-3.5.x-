@@ -23,7 +23,7 @@ import java.util.Properties;
         MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class
 })})
 //@Intercepts({@Signature( type= StatementHandler.class,  method = "update", args ={Statement.class})})
-    public class ExamplePlugin implements Interceptor {
+public class ExamplePlugin implements Interceptor {
 
     //  分页   读写分离    Select  增删改
 

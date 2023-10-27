@@ -104,36 +104,29 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
    * @author:xsls
    * @param execType:执行器类型
    * @param level:隔离级别
-   * @return:SqlSession
-   * @exception:
-   * @date:2019/9/9 13:38
+   * @param autoCommit: 是否自动提交
    */
   private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) {
     Transaction tx = null;
     try {
-      /**
-       * 获取环境变量
-       */
+      // 获取环境变量,数据库连接等
       final Environment environment = configuration.getEnvironment();
-      /**
-       * 获取事务工厂
-       */
+      // 获取事务工厂
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
       tx = transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);
       /**
        * 创建一个sql执行器对象
        * 一般情况下 若我们的mybaits的全局配置文件的cacheEnabled默认为ture就返回
-       * 一个cacheExecutor,若关闭的话返回的就是一个SimpleExecutor
+       * 一个cacheExecutor,若关闭的话返回的就是一个SimpleExecutor,设置与之匹配的插件Handle
        */
       final Executor executor = configuration.newExecutor(tx, execType);
-      /**
-       * 创建返回一个DefaultSqlSession对象返回
-       */
+      //  创建返回一个DefaultSqlSession对象返回
       return new DefaultSqlSession(configuration, executor, autoCommit);
     } catch (Exception e) {
       closeTransaction(tx); // may have fetched a connection so lets call close()
       throw ExceptionFactory.wrapException("Error opening session.  Cause: " + e, e);
     } finally {
+      // 清除错误信息
       ErrorContext.instance().reset();
     }
   }

@@ -70,10 +70,9 @@ public class XMLScriptBuilder extends BaseBuilder {
      *    2层  WhereSqlNode <WHERE>
      *    3层  IfSqlNode <IF>
      *       test="条件表达式"
-     *
      *  contexts= sql语句分： 1.TextSqlNode 带${}   2.StaticTextSqlNode
      */
-    MixedSqlNode rootSqlNode = parseDynamicTags(context);
+    MixedSqlNode rootSqlNode = parseDynamicTags(context); // parseDynamicTags 解析标签遇到子节点会递归解析
     SqlSource sqlSource;
     if (isDynamic) {
       // 动态Sql源

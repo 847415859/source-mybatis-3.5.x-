@@ -115,8 +115,6 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
    * @author:xsls
    * @param method:我们Mapper接口中的方法
    * @return:MapperMethod
-   * @exception:
-   * @date:2019/9/6 21:42
    */
   private MapperMethod cachedMapperMethod(Method method) {
     /**

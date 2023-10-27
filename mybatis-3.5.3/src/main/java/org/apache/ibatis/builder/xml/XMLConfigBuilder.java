@@ -112,26 +112,19 @@ public class XMLConfigBuilder extends BaseBuilder {
     this.parser = parser;
   }
 
+  /**
+   * 解析 XML 成 Configuration 对象
+   * @return
+   */
   public Configuration parse() {
-    /**
-     * 若已经解析过了 就抛出异常
-     */
+    // 若已经解析过了 就抛出异常
     if (parsed) {
       throw new BuilderException("Each XMLConfigBuilder can only be used once.");
     }
-    /**
-     * 设置解析标志位
-     */
+    // 设置解析标志位
     parsed = true;
-    /**
-     * 解析我们的mybatis-config.xml的
-     * 节点
-     * <configuration>
-     *
-     *
-     * </configuration>
-     */
-    parseConfiguration(parser.evalNode("/configuration"));
+    // 解析我们的mybatis-config.xml的节点 <configuration>
+    parseConfiguration(parser.evalNode("/configuration")); // parser.evalNode读取xml顶层标签数据
     return configuration;
   }
 
@@ -441,9 +434,12 @@ public class XMLConfigBuilder extends BaseBuilder {
         environment = context.getStringAttribute("default");
       }
       for (XNode child : context.getChildren()) {
+        // 数据厂商id mysql.oracle ...
         String id = child.getStringAttribute("id");
         if (isSpecifiedEnvironment(id)) {
+          // 事务管理器
           TransactionFactory txFactory = transactionManagerElement(child.evalNode("transactionManager"));
+          // 解析获取数据源
           DataSourceFactory dsFactory = dataSourceElement(child.evalNode("dataSource"));
           DataSource dataSource = dsFactory.getDataSource();
           Environment.Builder environmentBuilder = new Environment.Builder(id)

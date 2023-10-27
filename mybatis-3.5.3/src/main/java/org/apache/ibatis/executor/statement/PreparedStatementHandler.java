@@ -61,7 +61,9 @@ public class PreparedStatementHandler extends BaseStatementHandler {
   @Override
   public <E> List<E> query(Statement statement, ResultHandler resultHandler) throws SQLException {
     PreparedStatement ps = (PreparedStatement) statement;
+    // 真正的jdbc执行sql
     ps.execute();
+    // 处理结果集的映射
     return resultSetHandler.handleResultSets(ps);
   }
 

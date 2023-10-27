@@ -46,25 +46,17 @@ public class MapperRegistry {
    * @param type:Mapper的接口类型
    * @param sqlSession:接口类型实际上是我们的sqlSessionTemplate类型
    * @return:
-   * @exception:
-   * @date:2019/8/22 20:41
    */
   @SuppressWarnings("unchecked")
   public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
-    /**
-     * 直接去缓存knownMappers中通过Mapper的class类型去找我们的mapperProxyFactory
-     */
+    // 直接去缓存knownMappers中通过Mapper的class类型去找我们的mapperProxyFactory
     final MapperProxyFactory<T> mapperProxyFactory = (MapperProxyFactory<T>) knownMappers.get(type);
-    /**
-     * 缓存中没有获取到 直接抛出异常
-     */
+    // 缓存中没有获取到 直接抛出异常（说明没有在xml中解析到对应的Mapper）
     if (mapperProxyFactory == null) {
       throw new BindingException("Type " + type + " is not known to the MapperRegistry.");
     }
     try {
-      /**
-       * 通过MapperProxyFactory来创建我们的实例
-       */
+      // 通过MapperProxyFactory来创建我们的实例
       return mapperProxyFactory.newInstance(sqlSession);
     } catch (Exception e) {
       throw new BindingException("Error getting mapper instance. Cause: " + e, e);
@@ -110,11 +102,10 @@ public class MapperRegistry {
         knownMappers.put(type, new MapperProxyFactory<>(type));
         // It's important that the type is added before the parser is run
         // otherwise the binding may automatically be attempted by the
-        // mapper parser. If the type is already known, it won't try.    mapper注解构造器
+        // mapper parser. If the type is already known, it won't try.
+        // mapper注解构造器
         MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
-        /**
-         * 进行解析, 将接口完整限定名作为xml文件地址去解析
-         */
+        // 进行解析, 将接口完整限定名作为xml文件地址去解析
         parser.parse();
         loadCompleted = true;
       } finally {
@@ -138,7 +129,9 @@ public class MapperRegistry {
   public void addMappers(String packageName, Class<?> superType) {
     // 根据包找到所有类
     ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<>();
+    // 根据包名找到所有Mapper
     resolverUtil.find(new ResolverUtil.IsA(superType), packageName);
+    // 获取到所有的Mapper类
     Set<Class<? extends Class<?>>> mapperSet = resolverUtil.getClasses();
     // 循环所有的类
     for (Class<?> mapperClass : mapperSet) {

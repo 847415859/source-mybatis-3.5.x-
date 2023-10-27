@@ -11,7 +11,11 @@
     </settings>
 
    <plugins>
-       <plugin interceptor="com.tuling.plugins.ExamplePlugin" ></plugin>
+       <plugin interceptor="com.tuling.plugins.ExamplePlugin"/>
+       <plugin interceptor="com.tuling.plugins.MybatisInterceptor">
+           <property name="name" value="qiankun"/>
+           <property name="age" value="18"/>
+       </plugin>
     </plugins>
 
     <environments default="development">

@@ -29,7 +29,7 @@ import org.apache.ibatis.logging.LogFactory;
 
 /**
  * Provides a very simple API for accessing resources within an application server.
- *VFS含义是虚拟文件系统；主要是通过程序能够方便读取本地文件系统、FTP文件系统等系统中的文件资源。
+ * VFS含义是虚拟文件系统；主要是通过程序能够方便读取本地文件系统、FTP文件系统等系统中的文件资源。
  * 可配置
  * <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
  *    <property name="vfs"  ref="vfs"/>

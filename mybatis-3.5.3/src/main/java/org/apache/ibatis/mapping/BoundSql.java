@@ -65,7 +65,7 @@ public class BoundSql {
     String paramName = new PropertyTokenizer(name).getName();
     return additionalParameters.containsKey(paramName);
   }
-
+  // 替换参数
   public void setAdditionalParameter(String name, Object value) {
     metaParameters.setValue(name, value);
   }

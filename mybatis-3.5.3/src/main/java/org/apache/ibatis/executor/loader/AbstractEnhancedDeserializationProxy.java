@@ -52,9 +52,20 @@ public abstract class AbstractEnhancedDeserializationProxy {
     this.reloadingProperty = false;
   }
 
+  /**
+   * 代理对象执行
+   * @param enhanced  源对象
+   * @param method    源对象方法
+   * @param args      方法参数
+   * @return
+   * @throws Throwable
+   */
   public final Object invoke(Object enhanced, Method method, Object[] args) throws Throwable {
     final String methodName = method.getName();
     try {
+      // 序列化会调用此方法
+      // 如果一个序列化类中含有Object writeReplace()方法，那么实际序列化的对象将是作为writeReplace方法返回值的对象，
+      // 而且序列化过程的依据是实际被序列化对象的序列化实现。
       if (WRITE_REPLACE_METHOD.equals(methodName)) {
         final Object original;
         if (constructorArgTypes.isEmpty()) {

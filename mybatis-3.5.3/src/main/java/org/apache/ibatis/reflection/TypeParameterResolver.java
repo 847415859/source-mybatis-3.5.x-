@@ -55,22 +55,13 @@ public class TypeParameterResolver {
    * @author:xsls
    * @param method:调用方法对象
    * @param srcType:方法所主的原生接口
-   * @return:Type
-   * @exception:
-   * @date:2019/9/8 13:57
    */
   public static Type resolveReturnType(Method method, Type srcType) {
-    /**
-     * 返回值的类型
-     */
+    // 方法返回值的类型
     Type returnType = method.getGenericReturnType();
-    /**
-     * 接口类型
-     */
+    // 接口类型
     Class<?> declaringClass = method.getDeclaringClass();
-    /**
-     * 解析我们的返回值
-     */
+    // 解析我们的返回值
     return resolveType(returnType, srcType, declaringClass);
   }
 
@@ -99,20 +90,16 @@ public class TypeParameterResolver {
    * @author:xsls
    * @param type
    * @return:
-   * @exception:
-   * @date:2019/9/8 15:21
    */
   private static Type resolveType(Type type, Type srcType, Class<?> declaringClass) {
-    /**
-     * 是不是类型变量
-     */
+    // 是不是类型变量
     if (type instanceof TypeVariable) {
       return resolveTypeVar((TypeVariable<?>) type, srcType, declaringClass);
     } else if (type instanceof ParameterizedType) {
-      //参数化类型
+      // 参数化类型
       return resolveParameterizedType((ParameterizedType) type, srcType, declaringClass);
     } else if (type instanceof GenericArrayType) {
-      //泛型数组和参数类型数组
+      // 泛型数组和参数类型数组
       return resolveGenericArrayType((GenericArrayType) type, srcType, declaringClass);
     } else {
       return type;

@@ -9,7 +9,9 @@ import java.util.List;
  */
 public interface UserMapper {
 
-    User selectById(Integer id);
+    // User selectById(Integer id);
+    //
+    // Integer updateForName(String id,String username);
 
-    void updateForName(String id,String username);
+    Integer update(User user);
 }

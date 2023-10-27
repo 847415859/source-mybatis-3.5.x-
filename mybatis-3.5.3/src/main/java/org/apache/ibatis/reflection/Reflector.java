@@ -44,20 +44,31 @@ import org.apache.ibatis.reflection.property.PropertyNamer;
 /**
  * This class represents a cached set of class definition information that
  * allows for easy mapping between property names and getter/setter methods.
+ * 反射器
  *
  * @author Clinton Begin
  */
 public class Reflector {
 
+  // 需要反射解析的类
   private final Class<?> type;
+  // 可读属性
   private final String[] readablePropertyNames;
+  // 可写数学
   private final String[] writablePropertyNames;
+  // setter 方法  key: 方法的signature, value: 方法调用Invoker
   private final Map<String, Invoker> setMethods = new HashMap<>();
+  // getter方法  key: 方法的signature, value: 方法调用Invoker
   private final Map<String, Invoker> getMethods = new HashMap<>();
+
+  // setter 方法参数 Class类型   key: 方法的signature, value: 参数 Class
   private final Map<String, Class<?>> setTypes = new HashMap<>();
+  // getter 方法返回值 Class类型   key: 方法的signature, value: 返回值 Class
   private final Map<String, Class<?>> getTypes = new HashMap<>();
+  // 构造器（无参构造器）
   private Constructor<?> defaultConstructor;
 
+  // 大小写不敏感的属性  key：纯大写的属性名 ,value： 原属性
   private Map<String, String> caseInsensitivePropertyMap = new HashMap<>();
 
   public Reflector(Class<?> clazz) {
@@ -76,17 +87,28 @@ public class Reflector {
     }
   }
 
+  /**
+   * 添加默认构造器
+   * @param clazz
+   */
   private void addDefaultConstructor(Class<?> clazz) {
     Constructor<?>[] constructors = clazz.getDeclaredConstructors();
     Arrays.stream(constructors).filter(constructor -> constructor.getParameterTypes().length == 0)
       .findAny().ifPresent(constructor -> this.defaultConstructor = constructor);
   }
 
+  /**
+   * 解析所有的 getter 方法
+   * @param clazz
+   */
   private void addGetMethods(Class<?> clazz) {
+    // 所有属性的getter方法  =>  key为属性名称 value为方法列表
     Map<String, List<Method>> conflictingGetters = new HashMap<>();
     Method[] methods = getClassMethods(clazz);
+    // 匹配出所有的getter方法（无参）
     Arrays.stream(methods).filter(m -> m.getParameterTypes().length == 0 && PropertyNamer.isGetter(m.getName()))
       .forEach(m -> addMethodConflict(conflictingGetters, PropertyNamer.methodToProperty(m.getName()), m));
+    // 解析出明确和不明确的方法
     resolveGetterConflicts(conflictingGetters);
   }
 
@@ -102,6 +124,7 @@ public class Reflector {
         }
         Class<?> winnerType = winner.getReturnType();
         Class<?> candidateType = candidate.getReturnType();
+        // candidateType, winnerType类型相同
         if (candidateType.equals(winnerType)) {
           if (!boolean.class.equals(candidateType)) {
             isAmbiguous = true;
@@ -109,8 +132,10 @@ public class Reflector {
           } else if (candidate.getName().startsWith("is")) {
             winner = candidate;
           }
+        // candidateType 是否是 winnerType 的超类
         } else if (candidateType.isAssignableFrom(winnerType)) {
           // OK getter type is descendant
+        // winnerType 是否是 candidateType 的超类
         } else if (winnerType.isAssignableFrom(candidateType)) {
           winner = candidate;
         } else {
@@ -118,26 +143,33 @@ public class Reflector {
           break;
         }
       }
+      // 添加方法Invoker代理，如果调用不明确的方法则会报错
       addGetMethod(propName, winner, isAmbiguous);
     }
   }
 
   private void addGetMethod(String name, Method method, boolean isAmbiguous) {
     MethodInvoker invoker = isAmbiguous
+          // 调用就报错
         ? new AmbiguousMethodInvoker(method, MessageFormat.format(
             "Illegal overloaded getter method with ambiguous type for property ''{0}'' in class ''{1}''. This breaks the JavaBeans specification and can cause unpredictable results.",
             name, method.getDeclaringClass().getName()))
+          // 正常方法调用
         : new MethodInvoker(method);
     getMethods.put(name, invoker);
+    // 寻找出方法返回值解析类型 （TODO : 具体查看代码逻辑）
     Type returnType = TypeParameterResolver.resolveReturnType(method, type);
     getTypes.put(name, typeToClass(returnType));
   }
 
   private void addSetMethods(Class<?> clazz) {
     Map<String, List<Method>> conflictingSetters = new HashMap<>();
+    // 获取所有的方法
     Method[] methods = getClassMethods(clazz);
+    // 匹配出所有的setter 方法（只能有一个参数）
     Arrays.stream(methods).filter(m -> m.getParameterTypes().length == 1 && PropertyNamer.isSetter(m.getName()))
       .forEach(m -> addMethodConflict(conflictingSetters, PropertyNamer.methodToProperty(m.getName()), m));
+    // 解析出明确和不明确的方法
     resolveSetterConflicts(conflictingSetters);
   }
 
@@ -200,6 +232,11 @@ public class Reflector {
     setTypes.put(name, typeToClass(paramTypes[0]));
   }
 
+  /**
+   * 将 Type 转化为 Class 对象
+   * @param src
+   * @return
+   */
   private Class<?> typeToClass(Type src) {
     Class<?> result = null;
     if (src instanceof Class) {
@@ -221,6 +258,10 @@ public class Reflector {
     return result;
   }
 
+  /**
+   * 添加类型的属性，如果对应属性的没有 getter,setter ,设创建该属性的 Invoker 对象添加到 对应的 getter, setter 集合
+   * @param clazz
+   */
   private void addFields(Class<?> clazz) {
     Field[] fields = clazz.getDeclaredFields();
     for (Field field : fields) {
@@ -237,6 +278,7 @@ public class Reflector {
         addGetField(field);
       }
     }
+    // 处理父类的属性
     if (clazz.getSuperclass() != null) {
       addFields(clazz.getSuperclass());
     }
@@ -250,6 +292,10 @@ public class Reflector {
     }
   }
 
+  /**
+   * 添加 getter 属性
+   * @param field
+   */
   private void addGetField(Field field) {
     if (isValidPropertyName(field.getName())) {
       getMethods.put(field.getName(), new GetFieldInvoker(field));
@@ -258,6 +304,11 @@ public class Reflector {
     }
   }
 
+  /**
+   * 校验属性名称
+   * @param name
+   * @return
+   */
   private boolean isValidPropertyName(String name) {
     return !(name.startsWith("$") || "serialVersionUID".equals(name) || "class".equals(name));
   }
@@ -267,6 +318,8 @@ public class Reflector {
    * declared in this class and any superclass.
    * We use this method, instead of the simpler <code>Class.getMethods()</code>,
    * because we want to look for private methods as well.
+   * 此方法返回一个数组，该数组包含此类和任何超类中声明的所有方法。我们使用这个方法，
+   * 而不是更简单的Class.getMethods（），因为我们也想寻找私有方法
    *
    * @param clazz The class
    * @return An array containing all methods in this class
@@ -277,13 +330,12 @@ public class Reflector {
     while (currentClass != null && currentClass != Object.class) {
       addUniqueMethods(uniqueMethods, currentClass.getDeclaredMethods());
 
-      // we also need to look for interface methods -
-      // because the class may be abstract
+      // 寻找接口方法，因为类可能是抽象的
       Class<?>[] interfaces = currentClass.getInterfaces();
       for (Class<?> anInterface : interfaces) {
         addUniqueMethods(uniqueMethods, anInterface.getMethods());
       }
-
+      // 获取父类
       currentClass = currentClass.getSuperclass();
     }
 
@@ -294,7 +346,10 @@ public class Reflector {
 
   private void addUniqueMethods(Map<String, Method> uniqueMethods, Method[] methods) {
     for (Method currentMethod : methods) {
+      // 判断是否是桥接方法
+      // 桥接方法我原因查询 泛型类型擦除机制 （具体说明查询博客: https://www.cnblogs.com/zsg88/p/7588929.html）
       if (!currentMethod.isBridge()) {
+        // 获取方法签名
         String signature = getSignature(currentMethod);
         // check to see if the method is already known
         // if it is known, then an extended class must have
@@ -306,6 +361,12 @@ public class Reflector {
     }
   }
 
+  /**
+   * 获取方法签名
+   * 格式： 返回值类型全路径#方法名称:参数名类型全路径{1,2,3...}
+   * @param method
+   * @return
+   */
   private String getSignature(Method method) {
     StringBuilder sb = new StringBuilder();
     Class<?> returnType = method.getReturnType();

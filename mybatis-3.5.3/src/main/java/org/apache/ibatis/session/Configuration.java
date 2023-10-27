@@ -144,6 +144,10 @@ public class Configuration {
    */
   protected Class<?> configurationFactory;
 
+  /**
+   * MapperProxyFactory 映射
+   * Key : Mapper接口 Class
+   */
   protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
   protected final InterceptorChain interceptorChain = new InterceptorChain();
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
@@ -151,6 +155,10 @@ public class Configuration {
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
+  /**
+   * Mapstatement 映射
+   * key : '${namespace}.${id}'
+   */
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection")
       .conflictMessageProducer((savedValue, targetValue) ->
           ". please check " + savedValue.getResource() + " and " + targetValue.getResource());
@@ -593,7 +601,9 @@ public class Configuration {
   }
 
   public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+    // 路由StatementHandler 可以根据类型(statementType)选择创建 SimpleStatementHandler、PreparedStatementHandler、CallableStatementHandler
     StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
+    // 填充与之相匹配的插件,（包装成为代理对象）
     statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
     return statementHandler;
   }
@@ -607,9 +617,6 @@ public class Configuration {
    * @author:xsls
    * @param transaction:事务
    * @param executorType:执行器类型
-   * @return:Executor执行器对象
-   * @exception:
-   * @date:2019/9/9 13:59
    */
   public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
     executorType = executorType == null ? defaultExecutorType : executorType;
@@ -628,10 +635,10 @@ public class Configuration {
       //简单的sql执行器对象
       executor = new SimpleExecutor(this, transaction);
     }
-    //判断mybatis的全局配置文件是否开启缓存
+    // 判断mybatis的全局配置文件是否开启缓存
     if (cacheEnabled) {
       //把当前的简单的执行器包装成一个CachingExecutor
-      executor = new CachingExecutor(executor);
+      executor = new CachingExecutor(executor); // 缓存的装饰类
     }
     /**
      * TODO:调用所有的拦截器对象plugin方法
@@ -801,6 +808,7 @@ public class Configuration {
   }
 
   public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
+    // 从MapperRegistery 获取 mapper的代理对象，从MapperRegistery 在解析xml文件时已经解析
     return mapperRegistry.getMapper(type, sqlSession);
   }
 

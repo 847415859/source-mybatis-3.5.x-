@@ -65,34 +65,19 @@ public class XMLStatementBuilder extends BaseBuilder {
   }
 
   public void parseStatementNode() {
-    /**
-     * 我们的insert|delte|update|select 语句的sqlId
-     */
+    // 我们的insert|delte|update|select 语句的sqlId
     String id = context.getStringAttribute("id");
-    /**
-     * 判断我们的insert|delte|update|select  节点是否配置了
-     * 数据库厂商标注
-     */
+    // 判断我们的insert|delte|update|select  节点是否配置了数据库厂商标注
     String databaseId = context.getStringAttribute("databaseId");
-
-    /**
-     * 匹配当前的数据库厂商id是否匹配当前数据源的厂商id
-     */
+    // 匹配当前的数据库厂商id是否匹配当前数据源的厂商id
     if (!databaseIdMatchesCurrent(id, databaseId, this.requiredDatabaseId)) {
       return;
     }
-
-    /**
-     * 获得节点名称：select|insert|update|delete
-     */
+    // 获得节点名称：select|insert|update|delete
     String nodeName = context.getNode().getNodeName();
-    /**
-     * 根据nodeName 获得 SqlCommandType枚举
-     */
+    // 根据nodeName 获得 SqlCommandType枚举
     SqlCommandType sqlCommandType = SqlCommandType.valueOf(nodeName.toUpperCase(Locale.ENGLISH));
-    /**
-     * 判断是不是select语句节点
-     */
+    // 判断是不是select语句节点
     boolean isSelect = sqlCommandType == SqlCommandType.SELECT;
     /**
      *  获取flushCache属性

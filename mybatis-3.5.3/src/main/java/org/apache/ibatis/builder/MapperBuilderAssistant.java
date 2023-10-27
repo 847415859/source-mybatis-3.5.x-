@@ -141,8 +141,11 @@ public class MapperBuilderAssistant extends BaseBuilder {
       boolean readWrite,
       boolean blocking,
       Properties props) {
-    Cache cache = new CacheBuilder(currentNamespace)
+    // 1.生成 Cache对象
+    Cache cache = new CacheBuilder(currentNamespace)  // 将当前的命名空间作为Id,也就像confuguration中缓存map的key
+        // 如果定义的 <cache/> 中的 type, 就使用自定义的Cache，否则使用和一级缓存相同的类型
         .implementation(valueOrDefault(typeClass, PerpetualCache.class))
+        // 驱逐策略，默认值LRU
         .addDecorator(valueOrDefault(evictionClass, LruCache.class))
         .clearInterval(flushInterval)
         .size(size)
@@ -150,7 +153,9 @@ public class MapperBuilderAssistant extends BaseBuilder {
         .blocking(blocking)
         .properties(props)
         .build();
+    // 2.添加二级缓存到 全局配置类 Configuration中
     configuration.addCache(cache);
+    // 3.将cache赋值给 MapperBuilderAssistant.currentCache
     currentCache = cache;
     return cache;
   }
@@ -306,9 +311,11 @@ public class MapperBuilderAssistant extends BaseBuilder {
         .resultSets(resultSets)
         .resultMaps(getStatementResultMaps(resultMap, resultType, id))
         .resultSetType(resultSetType)
+        // 非查询操作，默认强制清空二级缓存
         .flushCacheRequired(valueOrDefault(flushCache, !isSelect))
+        // 查询操作默认开启
         .useCache(valueOrDefault(useCache, isSelect))
-        .cache(currentCache);
+        .cache(currentCache);   // 在之前生成的 Cache 封装到 MapperStatement中
 
     /**
      * 处理我们的paramMap和parameterType
