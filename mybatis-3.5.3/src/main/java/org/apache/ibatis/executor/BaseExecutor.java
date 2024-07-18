@@ -173,7 +173,7 @@ public abstract class BaseExecutor implements Executor {
     }
     List<E> list;
     try {
-      // <4.1> 从一级缓存中，获取查询结果
+      // <4.1> 从一级缓存中，获取查询结果,这样递归调用到上面的时候就不会再清局部缓存了
       queryStack++;
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
       // <4.2> 获取到，则进行处理
@@ -356,6 +356,18 @@ public abstract class BaseExecutor implements Executor {
     }
   }
 
+  /**
+   * 查询数据库
+   * @param ms            对于Mapper解析的详细信息
+   * @param parameter     入参
+   * @param rowBounds     分页信息
+   * @param resultHandler 结果处理器
+   * @param key           缓存的key
+   * @param boundSql      解析之后Sql信息 BoundSql
+   * @param <E>
+   * @return
+   * @throws SQLException
+   */
   private <E> List<E> queryFromDatabase(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
     List<E> list;
     // 在一级缓存中存放执行的标识符

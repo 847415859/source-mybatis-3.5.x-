@@ -30,21 +30,30 @@ import org.apache.ibatis.session.Configuration;
  * @author Clinton Begin
  */
 public class DynamicContext {
-
+  //  bindings 的 key，对应的 value 为原入参
   public static final String PARAMETER_OBJECT_KEY = "_parameter";
+  // bindings 的 key，对应的 value 为当前环境下生效的 databaseId
   public static final String DATABASE_ID_KEY = "_databaseId";
 
   static {
     OgnlRuntime.setPropertyAccessor(ContextMap.class, new ContextAccessor());
   }
-
+  //  用来存储入参和动态增加的变量
   private final ContextMap bindings;
+  //  用来存储 SqlNode 处理结束后生成的 sql
   private final StringJoiner sqlBuilder = new StringJoiner(" ");
+  // 用来提供唯一编号，通过每次获取后自增来保证得到的编号唯一
   private int uniqueNumber = 0;
 
+  /**
+   * 初始化 bindings，并设置入参和 databaseId
+   * @param configuration   配置信息
+   * @param parameterObject 入参
+   */
   public DynamicContext(Configuration configuration, Object parameterObject) {
     if (parameterObject != null && !(parameterObject instanceof Map)) {
       MetaObject metaObject = configuration.newMetaObject(parameterObject);
+      // 判断入参是否为已知类型处理的类型
       boolean existsTypeHandler = configuration.getTypeHandlerRegistry().hasTypeHandler(parameterObject.getClass());
       bindings = new ContextMap(metaObject, existsTypeHandler);
     } else {
@@ -76,6 +85,7 @@ public class DynamicContext {
 
   static class ContextMap extends HashMap<String, Object> {
     private static final long serialVersionUID = 2977601501966151582L;
+    // 入参数据
     private final MetaObject parameterMetaObject;
     private final boolean fallbackParameterObject;   // 是否已知类型处理的的类型
 
@@ -103,6 +113,7 @@ public class DynamicContext {
       }
     }
   }
+
 
   static class ContextAccessor implements PropertyAccessor {
 

@@ -37,16 +37,23 @@ import org.apache.ibatis.session.RowBounds;
 public class DefaultCursor<T> implements Cursor<T> {
 
   // ResultSetHandler stuff
+  // 结果集处理器
   private final DefaultResultSetHandler resultSetHandler;
+  // 结果集映射，信息源自 Mapper 映射文件中 <ResultMap> 节点
   private final ResultMap resultMap;
+  // ResultSet 包装类
   private final ResultSetWrapper rsw;
+  // 结果的起止信息
   private final RowBounds rowBounds;
+  // ResultHandler 的子类，起到暂存结果的作用
   private final ObjectWrapperResultHandler<T> objectWrapperResultHandler = new ObjectWrapperResultHandler<>();
-
+  // 游标的内部迭代器
   private final CursorIterator cursorIterator = new CursorIterator();
+  // 迭代器获取标志位，限制迭代器只能被获取一次
   private boolean iteratorRetrieved;
-
+  // 当前游标状态
   private CursorStatus status = CursorStatus.CREATED;
+  // 记录已经映射的行
   private int indexWithRowBound = -1;
 
   private enum CursorStatus {

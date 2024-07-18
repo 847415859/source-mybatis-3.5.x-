@@ -22,8 +22,11 @@ import org.apache.ibatis.session.ResultContext;
  */
 public class DefaultResultContext<T> implements ResultContext<T> {
 
+  // 结果对象
   private T resultObject;
+  // 结果计数（表明这是第几个结果对象）
   private int resultCount;
+  // 上下文是否被"销毁"标识
   private boolean stopped;
 
   public DefaultResultContext() {
@@ -32,6 +35,7 @@ public class DefaultResultContext<T> implements ResultContext<T> {
     stopped = false;
   }
 
+  // 获取结果对象
   @Override
   public T getResultObject() {
     return resultObject;
@@ -47,11 +51,13 @@ public class DefaultResultContext<T> implements ResultContext<T> {
     return stopped;
   }
 
+  // 填入下一个要传递的结果对象
   public void nextResultObject(T resultObject) {
     resultCount++;
     this.resultObject = resultObject;
   }
 
+  // 销毁上下文
   @Override
   public void stop() {
     this.stopped = true;

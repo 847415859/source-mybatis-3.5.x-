@@ -33,27 +33,46 @@ import org.apache.ibatis.session.Configuration;
  */
 public final class MappedStatement {
 
-  private String resource;//mapper配置文件名，如：UserMapper.xml
-  private Configuration configuration;//全局配置
-  private String id;//节点的id属性加命名空间,如：com.lucky.mybatis.dao.UserMapper.selectByExample
+  //mapper配置文件名，如：UserMapper.xml
+  private String resource;
+  // 全局配置
+  private Configuration configuration;
+  // 节点的id属性加命名空间,如：com.lucky.mybatis.dao.UserMapper.selectByExample
+  private String id;
+  //  用于设置JDBC中Statement对象的fetchSize属性，该属性用于指定SQL执行后返回的最大行数。
   private Integer fetchSize;
-  private Integer timeout;//超时时间
-  private StatementType statementType;//操作SQL的对象的类型
-  private ResultSetType resultSetType;//结果类型
-  private SqlSource sqlSource;//sql语句
-  private Cache cache;//缓存
+  // 驱动程序等待数据库返回请求结果的秒数，超时将会抛出异常
+  private Integer timeout;
+  //操作SQL的对象的类型。参数可选值为STATEMENT、PREPARED或CALLABLE，这会让MyBatis分别使用Statement、PreparedStatement或CallableStatement与数据库交互，默认值为PREPARED。
+  private StatementType statementType;
+  // 结果类型。参数可选值为FORWARD_ONLY、SCROLL_SENSITIVE或SCROLL_INSENSITIVE，用于设置ResultSet对象的特征，默认未设置，由JDBC驱动决定。
+  private ResultSetType resultSetType;
+  // sql语句
+  private SqlSource sqlSource;
+  // 缓存
+  private Cache cache;
+  // 引用通过<parameterMap>标签定义的参数映射，该属性已经废弃。
   private ParameterMap parameterMap;
   private List<ResultMap> resultMaps;
   // 是否强制清空二级缓存
   private boolean flushCacheRequired;
-  private boolean useCache;//是否使用缓存，默认为true
-  private boolean resultOrdered;//结果是否排序
-  private SqlCommandType sqlCommandType;//sql语句的类型，如select、update、delete、insert
+  // 是否使用缓存，默认为true
+  // 是否使用二级缓存。如果将其设置为true，则会导致本条语句的结果被缓存在MyBatis的二级缓存中，对应<select>标签，该属性的默认值为true。
+  private boolean useCache;
+  // 这个设置仅针对嵌套结果select语句适用，如果为true，就是假定嵌套结果包含在一起或分组在一起，这样的话，
+  // 当返回一个主结果行的时候，就不会发生对前面结果集引用的情况。这就使得在获取嵌套结果集的时候不至于导致内存不够用，默认值为false。
+  private boolean resultOrdered;
+  // sql语句的类型，如select、update、delete、insert、flush
+  private SqlCommandType sqlCommandType;
+  // 主键生成器，用于在插入语句中根据数据库自动生成主键
   private KeyGenerator keyGenerator;
+  // 主键列名
   private String[] keyProperties;
+  // 主键列名
   private String[] keyColumns;
   private boolean hasNestedResultMaps;
-  private String databaseId;//数据库ID
+  // 数据库ID
+  private String databaseId;
   private Log statementLog;
   private LanguageDriver lang;
   private String[] resultSets;

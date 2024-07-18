@@ -33,13 +33,14 @@ import org.apache.ibatis.session.Configuration;
  */
 public class XMLLanguageDriver implements LanguageDriver {
 
+  // 返回 ParameterHandler 的默认实现
   @Override
   public ParameterHandler createParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql) {
     return new DefaultParameterHandler(mappedStatement, parameterObject, boundSql);
   }
 
   /**
-   * 方法实现说明:创建我们的sqlSource对象
+   *  解析脚本节点生成 SqlSource，处理在映射文件中声明的 SQL
    * @author:xsls
    * @param configuration:全局配置
    * @param script:脚本类型
@@ -47,22 +48,27 @@ public class XMLLanguageDriver implements LanguageDriver {
    */
   @Override
   public SqlSource createSqlSource(Configuration configuration, XNode script, Class<?> parameterType) {
+    //  脚本语句，通过 XMLScriptBuilder 进行解析
     XMLScriptBuilder builder = new XMLScriptBuilder(configuration, script, parameterType);
     return builder.parseScriptNode();
   }
 
+  //  解析脚本生成 SqlSource，处理注解中声明的 SQL 语句
   @Override
   public SqlSource createSqlSource(Configuration configuration, String script, Class<?> parameterType) {
-    // issue #3
+    //  兼容注解中的 SQL 语句，如果是脚本的话，则需要使用脚本驱动进行解析
     if (script.startsWith("<script>")) {
       XPathParser parser = new XPathParser(script, false, configuration.getVariables(), new XMLMapperEntityResolver());
       return createSqlSource(configuration, parser.evalNode("/script"), parameterType);
+    // 如果是非脚本语言
     } else {
       // issue #127
       script = PropertyParser.parse(script, configuration.getVariables());
       TextSqlNode textSqlNode = new TextSqlNode(script);
+      // 动态语句则使用 DynamicSqlSource 解析
       if (textSqlNode.isDynamic()) {
         return new DynamicSqlSource(configuration, textSqlNode);
+      // 非动态语句则使用 RawSqlSource 解析
       } else {
         return new RawSqlSource(configuration, script, parameterType);
       }

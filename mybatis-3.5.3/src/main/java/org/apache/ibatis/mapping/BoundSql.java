@@ -34,9 +34,12 @@ import org.apache.ibatis.session.Configuration;
  * @author Clinton Begin
  */
 public class BoundSql {
-
+  // 解析后的sql, 会把 #{} 替换成 ?
+  // 例如： select * from t_user WHERE  user_name like concat('%',#{userName},'%')  and age=#{age}
   private final String sql;
+  // 参数映射列表
   private final List<ParameterMapping> parameterMappings;
+  // 参数对象
   private final Object parameterObject;
   private final Map<String, Object> additionalParameters;
   private final MetaObject metaParameters;

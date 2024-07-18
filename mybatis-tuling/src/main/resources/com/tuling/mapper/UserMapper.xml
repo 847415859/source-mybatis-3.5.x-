@@ -19,21 +19,21 @@
 <!--        </set>-->
 <!--        where id=#{arg0}-->
 <!--    </update>-->
-    <update id="update">
-        UPDATE t_user
-        <trim prefix="SET" prefixOverrides=",">
-            <if test="userName != null and userName != ''">
-                user_name = #{userName}
-            </if>
-            <if test="age != null and age != ''">
-                , age = #{age}
-            </if>
-            <if test="createTime != null">
-                , create_time = #{createTime}
-            </if>
-        </trim>
-        where id = ${id}
-    </update>
+<!--    <update id="update">-->
+<!--        UPDATE t_user-->
+<!--        <trim prefix="SET" prefixOverrides=",">-->
+<!--            <if test="userName != null and userName != ''">-->
+<!--                user_name = #{userName}-->
+<!--            </if>-->
+<!--            <if test="age != null and age != ''">-->
+<!--                , age = #{age}-->
+<!--            </if>-->
+<!--            <if test="createTime != null">-->
+<!--                , create_time = #{createTime}-->
+<!--            </if>-->
+<!--        </trim>-->
+<!--        where id = ${id}-->
+<!--    </update>-->
 
 
 <!--    <select id="selectById" resultMap="result" useCache="true">-->
@@ -44,6 +44,29 @@
 <!--            </if>-->
 <!--        </where>-->
 <!--    </select>-->
+    <select id="listAll" resultType="com.tuling.entity.User">
+        select * from t_user
+        <where>
+            <if test="userName != null">
+                and user_name like concat('%',#{userName},'%')
+            </if>
+            <if test="age != null">
+                and age=#{age}
+            </if>
+        </where>
+    </select>
+
+    <select id="listByParam" resultType="com.tuling.entity.User">
+        select * from t_user
+        <where>
+            <if test="userName != null">
+                and user_name like concat('%',#{userName},'%')
+            </if>
+            <if test="age != null">
+                and age=#{age}
+            </if>
+        </where>
+    </select>
 
 
     <!--

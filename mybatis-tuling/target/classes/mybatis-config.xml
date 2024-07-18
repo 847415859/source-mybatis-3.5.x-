@@ -32,7 +32,6 @@
     </environments>
 
 
-
     <mappers>
         <!--1.必须保证接口名（例如IUserDao）和xml名（IUserDao.xml）相同，还必须在同一个包中-->
         <package name="com.tuling.mapper"/>

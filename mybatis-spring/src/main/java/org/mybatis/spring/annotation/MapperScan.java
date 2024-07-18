@@ -86,6 +86,7 @@ import org.springframework.context.annotation.Import;
 public @interface MapperScan {
 
   /**
+   * basePackages属性的别名。允许更简洁的注释声明，例如：@MapperScan（“org.my.pkg”）
    * Alias for the {@link #basePackages()} attribute. Allows for more concise annotation declarations e.g.:
    * {@code @MapperScan("org.my.pkg")} instead of {@code @MapperScan(basePackages = "org.my.pkg"})}.
    *

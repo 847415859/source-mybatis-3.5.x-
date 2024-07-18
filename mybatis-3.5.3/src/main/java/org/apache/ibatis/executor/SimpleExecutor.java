@@ -62,9 +62,10 @@ public class SimpleExecutor extends BaseExecutor {
       StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
       // 拿到连接和statement
       stmt = prepareStatement(handler, ms.getStatementLog());
-      // 真正执sql
+      // 真正执sql,将数据库返回结果转化为设定的对象，比如List，Map或者是POJO
       return handler.query(stmt, resultHandler);
     } finally {
+      // 关闭 statement
       closeStatement(stmt);
     }
   }

@@ -194,9 +194,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
    */
   @Override
   public Set<BeanDefinitionHolder> doScan(String... basePackages) {
-    /**
-     * 调用父类ClassPathBeanDefinitionScanner 来进行扫描
-     */
+    // 调用父类ClassPathBeanDefinitionScanner 来进行扫描
     Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
 
     /**
@@ -231,7 +229,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
           + "' mapperInterface");
 
       /**
-       * 进行真的偷天换日操作,也就是这二行代码是最最最最最重要的, 关乎我们 spring整合mybaits的整合 definition.setBeanClass(this.mapperFactoryBeanClass);
+       *  核心： 进行真的偷天换日操作,也就是这二行代码是最最最最最重要的, 关乎我们 spring整合mybaits的整合 definition.setBeanClass(this.mapperFactoryBeanClass);
        */
       // 设置ConstructorArgumentValues 会通过构造器初始化对象
       definition.getConstructorArgumentValues().addGenericArgumentValue(beanClassName); // issue #59

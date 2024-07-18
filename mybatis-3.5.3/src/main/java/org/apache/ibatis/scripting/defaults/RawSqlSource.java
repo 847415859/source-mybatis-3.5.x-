@@ -43,10 +43,15 @@ public class RawSqlSource implements SqlSource {
   public RawSqlSource(Configuration configuration, String sql, Class<?> parameterType) {
     SqlSourceBuilder sqlSourceParser = new SqlSourceBuilder(configuration);
     Class<?> clazz = parameterType == null ? Object.class : parameterType;
+    //  解析生成 StaticSqlSource 对象
     sqlSource = sqlSourceParser.parse(sql, clazz, new HashMap<>());
   }
 
+  /**
+   * 得到 Sql 语句
+   */
   private static String getSql(Configuration configuration, SqlNode rootSqlNode) {
+    // 由于 SqlNode 中不包含动态节点或者 "${}"，所以不需要入参就能构建出 Sql 语句
     DynamicContext context = new DynamicContext(configuration, null);
     rootSqlNode.apply(context);
     return context.getSql();

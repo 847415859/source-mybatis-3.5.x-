@@ -57,8 +57,9 @@ public class TextSqlNode implements SqlNode {
   }
 
   private static class BindingTokenParser implements TokenHandler {
-
+    // 动态上下文
     private DynamicContext context;
+    // 注入检查拦截器，在当前版本中的 Mybatis 还没有被使用到
     private Pattern injectionFilter;
 
     public BindingTokenParser(DynamicContext context, Pattern injectionFilter) {
@@ -68,14 +69,17 @@ public class TextSqlNode implements SqlNode {
 
     @Override
     public String handleToken(String content) {
+      // 得到原始的入参
       Object parameter = context.getBindings().get("_parameter");
       if (parameter == null) {
         context.getBindings().put("value", null);
       } else if (SimpleTypeRegistry.isSimpleType(parameter.getClass())) {
         context.getBindings().put("value", parameter);
       }
+      // 得到 content 对应的 value
       Object value = OgnlCache.getValue(content, context.getBindings());
       String srtValue = value == null ? "" : String.valueOf(value); // issue #274 return "" instead of "null"
+      // 注入检查，在当前版本中的 Mybatis 还没有被使用到
       checkInjection(srtValue);
       return srtValue;
     }

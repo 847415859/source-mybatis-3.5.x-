@@ -415,7 +415,7 @@ public class MapperScannerConfigurer
      * <property name="basePackage" value="${basePackage}"/> <property name="processPropertyPlaceHolders" value="true">
      * 若这个为false的话,就不能解析${basePackage} </bean>
      *
-     * 终极奥义:因为postProcessBeanDefinitionRegistry 是为我们注册bean定义的,但是注册bean定义的是偶 需要解析${basepackaage}
+     * 终极奥义:因为postProcessBeanDefinitionRegistry 是为我们注册bean定义的,但是注册bean定义的是偶尔需要解析${basepackaage}
      * 但是我们PropertyResourceConfigurer类型的bean定义还没有实例化成bean对象 ，所以还不能提供解析${basepackaage}这个的能力，
      * 所有显示的设置processPropertyPlaceHolders为ture,就是想通过applicationContext.getBeansOfType(PropertyResourceConfigurer.class);
      * 提前吧PropertyResourceConfigurer组件实例化出来，从而来解析${basepackaage}

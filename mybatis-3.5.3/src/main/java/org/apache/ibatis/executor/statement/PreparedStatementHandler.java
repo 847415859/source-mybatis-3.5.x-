@@ -48,6 +48,7 @@ public class PreparedStatementHandler extends BaseStatementHandler {
     int rows = ps.getUpdateCount();
     Object parameterObject = boundSql.getParameterObject();
     KeyGenerator keyGenerator = mappedStatement.getKeyGenerator();
+    // keyGenerator在执行之后运行
     keyGenerator.processAfter(executor, mappedStatement, ps, parameterObject);
     return rows;
   }

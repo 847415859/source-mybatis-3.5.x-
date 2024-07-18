@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.ibatis.session.SqlSession;
+import org.apache.tools.ant.util.UnicodeUtil;
+import sun.nio.cs.UnicodeEncoder;
 
 /**
  * @author Lasse Voss

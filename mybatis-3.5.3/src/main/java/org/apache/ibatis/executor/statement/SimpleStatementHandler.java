@@ -41,12 +41,17 @@ public class SimpleStatementHandler extends BaseStatementHandler {
     super(executor, mappedStatement, parameter, rowBounds, resultHandler, boundSql);
   }
 
+  // 更新
   @Override
   public int update(Statement statement) throws SQLException {
+    // 获得sql语句
     String sql = boundSql.getSql();
+    // 获得参数
     Object parameterObject = boundSql.getParameterObject();
+    // 获取主键生成
     KeyGenerator keyGenerator = mappedStatement.getKeyGenerator();
     int rows;
+    // statement执行sql语句返回更新数目
     if (keyGenerator instanceof Jdbc3KeyGenerator) {
       statement.execute(sql, Statement.RETURN_GENERATED_KEYS);
       rows = statement.getUpdateCount();
@@ -56,12 +61,14 @@ public class SimpleStatementHandler extends BaseStatementHandler {
       rows = statement.getUpdateCount();
       keyGenerator.processAfter(executor, mappedStatement, statement, parameterObject);
     } else {
+      // 如果没有keyGenerator，直接调用Statement.execute和Statement.getUpdateCount
       statement.execute(sql);
       rows = statement.getUpdateCount();
     }
     return rows;
   }
 
+  // 批处理
   @Override
   public void batch(Statement statement) throws SQLException {
     String sql = boundSql.getSql();
@@ -91,6 +98,7 @@ public class SimpleStatementHandler extends BaseStatementHandler {
     }
   }
 
+  // 由于SimpleStatementHandler是处理没有参数的SQL，所以参数设置的方法无需任何处理
   @Override
   public void parameterize(Statement statement) {
     // N/A

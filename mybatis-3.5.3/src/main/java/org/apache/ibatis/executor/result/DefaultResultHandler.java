@@ -23,6 +23,7 @@ import org.apache.ibatis.session.ResultContext;
 import org.apache.ibatis.session.ResultHandler;
 
 /**
+ * List 结果处理器
  * @author Clinton Begin
  */
 public class DefaultResultHandler implements ResultHandler<Object> {

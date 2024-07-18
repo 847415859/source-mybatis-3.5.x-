@@ -33,10 +33,13 @@ import org.w3c.dom.NodeList;
  * @author Clinton Begin
  */
 public class XMLScriptBuilder extends BaseBuilder {
-
+  // 要解析构建的XML节点
   private final XNode context;
+  // 当前节点是否为动态节点，如果 SQL 中有 ${} 或者有 <if>、<foreach> 等动态节点时为 true
   private boolean isDynamic;
+  // 参数类型
   private final Class<?> parameterType;
+  // 保存节点对应的节点处理器
   private final Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
 
   public XMLScriptBuilder(Configuration configuration, XNode context) {
@@ -50,7 +53,7 @@ public class XMLScriptBuilder extends BaseBuilder {
     initNodeHandlerMap();
   }
 
-
+  // 初始化节点处理器
   private void initNodeHandlerMap() {
     nodeHandlerMap.put("trim", new TrimHandler());
     nodeHandlerMap.put("where", new WhereHandler());
@@ -91,9 +94,11 @@ public class XMLScriptBuilder extends BaseBuilder {
   // 解析${} 和 动态节点
   protected MixedSqlNode parseDynamicTags(XNode node) {
     List<SqlNode> contents = new ArrayList<>();
-    NodeList children = node.getNode().getChildNodes();  //获得<select>的子节点
+    // 获取到解析到xml节点集合(获得<select>的子节点)
+    NodeList children = node.getNode().getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
       XNode child = node.newXNode(children.item(i));
+      // 判断当前是否为文本节点或是 CDATA节点,
       if (child.getNode().getNodeType() == Node.CDATA_SECTION_NODE || child.getNode().getNodeType() == Node.TEXT_NODE) {
         String data = child.getStringBody(""); // 获得sql文本
         TextSqlNode textSqlNode = new TextSqlNode(data);
@@ -101,12 +106,16 @@ public class XMLScriptBuilder extends BaseBuilder {
           contents.add(textSqlNode);
           isDynamic = true;
         } else {
+          // sql文本不带有${}，则直接添加 静态文本节点
           contents.add(new StaticTextSqlNode(data));  //静态文本
         }
+      // 判断是元素节点
       } else if (child.getNode().getNodeType() == Node.ELEMENT_NODE) { // issue #628
         String nodeName = child.getNode().getNodeName();
 
-        /*** 判断当前节点是不是动态sql节点{@link XMLScriptBuilder#initNodeHandlerMap()}*/
+        /** 判断当前节点是不是动态sql节点{@link XMLScriptBuilder#initNodeHandlerMap()}
+         * 获取到对应的节点处理器进行处理，并设置当前节点为动态节点
+         */
         NodeHandler handler = nodeHandlerMap.get(nodeName);
         if (handler == null) {
           throw new BuilderException("Unknown element <" + nodeName + "> in SQL statement.");
@@ -115,6 +124,7 @@ public class XMLScriptBuilder extends BaseBuilder {
         isDynamic = true;     // 怎样算Dynamic? 其实就是判断sql文本动态sql节点
       }
     }
+    // 返回一个混合节点
     return new MixedSqlNode(contents);
   }
 
@@ -143,11 +153,14 @@ public class XMLScriptBuilder extends BaseBuilder {
 
     @Override
     public void handleNode(XNode nodeToHandle, List<SqlNode> targetContents) {
+      // 解析所有子节点
       MixedSqlNode mixedSqlNode = parseDynamicTags(nodeToHandle);
+      // 提取声明的属性
       String prefix = nodeToHandle.getStringAttribute("prefix");
       String prefixOverrides = nodeToHandle.getStringAttribute("prefixOverrides");
       String suffix = nodeToHandle.getStringAttribute("suffix");
       String suffixOverrides = nodeToHandle.getStringAttribute("suffixOverrides");
+      // 构建 TrimSqlNode
       TrimSqlNode trim = new TrimSqlNode(configuration, mixedSqlNode, prefix, prefixOverrides, suffix, suffixOverrides);
       targetContents.add(trim);
     }
@@ -231,10 +244,14 @@ public class XMLScriptBuilder extends BaseBuilder {
 
     @Override
     public void handleNode(XNode nodeToHandle, List<SqlNode> targetContents) {
+      // 保存 WhereSqlNode
       List<SqlNode> whenSqlNodes = new ArrayList<>();
+      // 保存 OtherwiseSqlNode
       List<SqlNode> otherwiseSqlNodes = new ArrayList<>();
       handleWhenOtherwiseNodes(nodeToHandle, whenSqlNodes, otherwiseSqlNodes);
+      // 从 OtherwiseSqlNode 中得到唯一的默认节点
       SqlNode defaultSqlNode = getDefaultSqlNode(otherwiseSqlNodes);
+      // 构建 ChooseSqlNode
       ChooseSqlNode chooseSqlNode = new ChooseSqlNode(whenSqlNodes, defaultSqlNode);
       targetContents.add(chooseSqlNode);
     }
@@ -242,6 +259,7 @@ public class XMLScriptBuilder extends BaseBuilder {
     private void handleWhenOtherwiseNodes(XNode chooseSqlNode, List<SqlNode> ifSqlNodes, List<SqlNode> defaultSqlNodes) {
       List<XNode> children = chooseSqlNode.getChildren();
       for (XNode child : children) {
+        // 根据不同的节点类型选用不同的节点处理器
         String nodeName = child.getNode().getNodeName();
         NodeHandler handler = nodeHandlerMap.get(nodeName);
         if (handler instanceof IfHandler) {
@@ -252,6 +270,7 @@ public class XMLScriptBuilder extends BaseBuilder {
       }
     }
 
+    // 默认的 SqlNode 有且只有一个
     private SqlNode getDefaultSqlNode(List<SqlNode> defaultSqlNodes) {
       SqlNode defaultSqlNode = null;
       if (defaultSqlNodes.size() == 1) {

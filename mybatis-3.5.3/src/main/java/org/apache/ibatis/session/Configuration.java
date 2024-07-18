@@ -99,9 +99,9 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  * @author Clinton Begin
  */
 public class Configuration {
-
+  // 环境，数据源、事务管理器等
   protected Environment environment;
-
+  // boolean类型的相关配置
   protected boolean safeRowBoundsEnabled;
   protected boolean safeResultHandlerEnabled = true;
   protected boolean mapUnderscoreToCamelCase;
@@ -113,7 +113,7 @@ public class Configuration {
   protected boolean callSettersOnNulls;
   protected boolean useActualParamName = true;
   protected boolean returnInstanceForEmptyRow;
-
+  // 日志、缓存等配置
   protected String logPrefix;
   protected Class<? extends Log> logImpl;
   protected Class<? extends VFS> vfsImpl;
@@ -126,12 +126,12 @@ public class Configuration {
   protected ExecutorType defaultExecutorType = ExecutorType.SIMPLE;
   protected AutoMappingBehavior autoMappingBehavior = AutoMappingBehavior.PARTIAL;
   protected AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior = AutoMappingUnknownColumnBehavior.NONE;
-
+  // 数据库连接属性、对象、反射工厂等配置
   protected Properties variables = new Properties();
   protected ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
   protected ObjectFactory objectFactory = new DefaultObjectFactory();
   protected ObjectWrapperFactory objectWrapperFactory = new DefaultObjectWrapperFactory();
-
+  // 懒加载、代理工厂
   protected boolean lazyLoadingEnabled = false;
   protected ProxyFactory proxyFactory = new JavassistProxyFactory(); // #224 Using internal Javassist instead of OGNL
 
@@ -145,14 +145,17 @@ public class Configuration {
   protected Class<?> configurationFactory;
 
   /**
-   * MapperProxyFactory 映射
+   *  mapper注册器，将所有的mapper接口添加到内存中
    * Key : Mapper接口 Class
    */
   protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
+  // 拦截器链，存放所有拦截器
   protected final InterceptorChain interceptorChain = new InterceptorChain();
+  // 类型处理注册器，存放所有的类型处理器
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
   // 类型别名注册器 TypeAliasRegistry构造函数会注册一些， Configuration构造函数会注册一些
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
+  // 语言驱动注册器，存放所有的语言驱动处理类
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
   /**

@@ -189,14 +189,18 @@ public class MapperMethod {
 
   private <E> Object executeForMany(SqlSession sqlSession, Object[] args) {
     List<E> result;
+    // 将args转为SqlCommandParam
     Object param = method.convertArgsToSqlCommandParam(args);
+    // RowBounds 分页查询
     if (method.hasRowBounds()) {
+      // 分页查询
       RowBounds rowBounds = method.extractRowBounds(args);
       result = sqlSession.selectList(command.getName(), param, rowBounds);
     } else {
+      //  调用sqlSession查询方法
       result = sqlSession.selectList(command.getName(), param);
     }
-    // issue #510 Collections & arrays support
+    // 处理返回数组 当返回的List 和方法返回类型不太匹配时
     if (!method.getReturnType().isAssignableFrom(result.getClass())) {
       if (method.getReturnType().isArray()) {
         return convertToArray(result);
@@ -299,7 +303,8 @@ public class MapperMethod {
        */
       MappedStatement ms = resolveMappedStatement(mapperInterface, methodName, declaringClass,
           configuration);
-      if (ms == null) {
+      if (ms == null) { // 当前方法没有怕匹配到对象的 MappedStatement
+        // 如果方法上加了 @Flush 注解，则执行表示为该方法是一个 flush操作
         if (method.getAnnotation(Flush.class) != null) {
           name = null;
           type = SqlCommandType.FLUSH;
@@ -339,11 +344,11 @@ public class MapperMethod {
      */
     private MappedStatement resolveMappedStatement(Class<?> mapperInterface, String methodName,
         Class<?> declaringClass, Configuration configuration) {
-      //获取我们的sql对应的statmentId(com.tuling.mapper.DeptMapper.findDepts)
+      // 获取我们的sql对应的statmentId(com.tuling.mapper.DeptMapper.findDepts)
       String statementId = mapperInterface.getName() + "." + methodName;
-      //根据我们的statmentId判断我们的主配置类是否包含 了我们的mapperStatment对象
+      // 根据我们的statmentId判断我们的主配置类是否包含 了我们的mapperStatment对象
       if (configuration.hasStatement(statementId)) {
-        //存在通过key获取对应的mapperStatment对象返回
+        // 存在通过key获取对应的mapperStatment对象返回
         return configuration.getMappedStatement(statementId);
       } else if (mapperInterface.equals(declaringClass)) {
         return null;
@@ -355,8 +360,7 @@ public class MapperMethod {
         //判断方法所在的类是否实现了superInterface
         if (declaringClass.isAssignableFrom(superInterface)) {
           //解析我们父类的MappedStatment对象
-          MappedStatement ms = resolveMappedStatement(superInterface, methodName,
-              declaringClass, configuration);
+          MappedStatement ms = resolveMappedStatement(superInterface, methodName, declaringClass, configuration);
           if (ms != null) {
             return ms;
           }
@@ -369,14 +373,22 @@ public class MapperMethod {
   public static class MethodSignature {
 
     private final boolean returnsMany;
+    // 返回值是不是map类型
     private final boolean returnsMap;
+    // 返回值是不是void
     private final boolean returnsVoid;
+    // 返回值是不是游标
     private final boolean returnsCursor;
+    // 返回值是不是optionnal类型
     private final boolean returnsOptional;
+    // 返回值类型
     private final Class<?> returnType;
     private final String mapKey;
+    // ResultHandler在拦截方法参数中的索引
     private final Integer resultHandlerIndex;
+    // RowBounds在拦截方法参数中的索引
     private final Integer rowBoundsIndex;
+    // 参数名解析器
     private final ParamNameResolver paramNameResolver;
 
     /**
@@ -412,9 +424,12 @@ public class MapperMethod {
       this.returnsCursor = Cursor.class.equals(this.returnType);
       //返回值是不是optionnal类型的
       this.returnsOptional = Optional.class.equals(this.returnType);
+      // 获取 @MapKey 注解的值
       this.mapKey = getMapKey(method);
       this.returnsMap = this.mapKey != null;
+      // 判断参数中是否有RowBounds,返回对应的索引
       this.rowBoundsIndex = getUniqueParamIndex(method, RowBounds.class);
+      // 判断参数中是否有ResultHandler,返回对应的索引
       this.resultHandlerIndex = getUniqueParamIndex(method, ResultHandler.class);
       /**
        * 初始化我们参数解析器对象
@@ -485,6 +500,7 @@ public class MapperMethod {
 
     private Integer getUniqueParamIndex(Method method, Class<?> paramType) {
       Integer index = null;
+      // 获取所有的参数类型
       final Class<?>[] argTypes = method.getParameterTypes();
       for (int i = 0; i < argTypes.length; i++) {
         if (paramType.isAssignableFrom(argTypes[i])) {

@@ -27,8 +27,17 @@ import org.apache.ibatis.session.Configuration;
  */
 public class StaticSqlSource implements SqlSource {
 
+  // XML 中的SQL 信息 SELECT
+  //	        *
+  //        FROM
+  //	        bsd_account
+  //	    where
+  //            bsd_account.status > ?
   private final String sql;
+  // 参数映射关系 ParameterMapping{property='user.uid', mode=IN, javaType=class java.lang.Object
+  // , jdbcType=null, numericScale=null, resultMapId='null', jdbcTypeName='null', expression='null'}
   private final List<ParameterMapping> parameterMappings;
+  // Configuration 配置信息
   private final Configuration configuration;
 
   public StaticSqlSource(Configuration configuration, String sql) {
@@ -41,6 +50,7 @@ public class StaticSqlSource implements SqlSource {
     this.configuration = configuration;
   }
 
+  // 获取BoundSql对象
   @Override
   public BoundSql getBoundSql(Object parameterObject) {
     return new BoundSql(configuration, sql, parameterMappings, parameterObject);

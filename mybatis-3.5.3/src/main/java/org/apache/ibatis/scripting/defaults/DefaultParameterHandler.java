@@ -38,11 +38,15 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  */
 public class DefaultParameterHandler implements ParameterHandler {
 
+  // 类型处理器注册表
   private final TypeHandlerRegistry typeHandlerRegistry;
-
+  // Mapper XML 中配置的参数映射信息
   private final MappedStatement mappedStatement;
+  // 参数对象
   private final Object parameterObject;
+  // sql 对象
   private final BoundSql boundSql;
+  // 全局配置对象
   private final Configuration configuration;
 
   public DefaultParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql) {
@@ -57,22 +61,27 @@ public class DefaultParameterHandler implements ParameterHandler {
   public Object getParameterObject() {
     return parameterObject;
   }
-
+  // 设置参数
   @Override
   public void setParameters(PreparedStatement ps) {
     ErrorContext.instance().activity("setting parameters").object(mappedStatement.getParameterMap().getId());
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
     if (parameterMappings != null) {
+      // 循环设置参数
       for (int i = 0; i < parameterMappings.size(); i++) {
         ParameterMapping parameterMapping = parameterMappings.get(i);
+        // 如果不是OUT，才设进去
         if (parameterMapping.getMode() != ParameterMode.OUT) {
           Object value;
           String propertyName = parameterMapping.getProperty();
+          // 判断是否参数映射中存在该属性，若存在则设为参数映射中的值
           if (boundSql.hasAdditionalParameter(propertyName)) { // issue #448 ask first for additional params
+            // 若有额外的参数, 设为额外的参数
             value = boundSql.getAdditionalParameter(propertyName);
           } else if (parameterObject == null) {
+            // 若参数对象为空, 设为 null
             value = null;
-            // 如果已经存在该参数的类型处理器那直接设置成value,反正类型处理器会解析value
+          // 如果已经存在该参数的类型处理器那直接设置成value,反正类型处理器会解析value
           } else if (typeHandlerRegistry.hasTypeHandler(parameterObject.getClass())) {
             value = parameterObject;
           } else {
@@ -84,6 +93,7 @@ public class DefaultParameterHandler implements ParameterHandler {
           TypeHandler typeHandler = parameterMapping.getTypeHandler(); // 这个类型处理器是在解析BoundSql的时候就解析好了的
           JdbcType jdbcType = parameterMapping.getJdbcType();
           if (value == null && jdbcType == null) {
+            // 不同类型的set方法不同，所以委派给子类的setParameter方法
             jdbcType = configuration.getJdbcTypeForNull();
           }
           try {

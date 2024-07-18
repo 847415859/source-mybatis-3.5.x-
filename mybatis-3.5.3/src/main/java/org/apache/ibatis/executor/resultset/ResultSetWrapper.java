@@ -40,13 +40,21 @@ import org.apache.ibatis.type.UnknownTypeHandler;
  */
 public class ResultSetWrapper {
 
+  // 数据集
   private final ResultSet resultSet;
+  // 类型处理器注册表
   private final TypeHandlerRegistry typeHandlerRegistry;
+  // 列名
   private final List<String> columnNames = new ArrayList<>();
+  // 类名
   private final List<String> classNames = new ArrayList<>();
+  // JDBC 类型
   private final List<JdbcType> jdbcTypes = new ArrayList<>();
+  // 类型处理器映射
   private final Map<String, Map<Class<?>, TypeHandler<?>>> typeHandlerMap = new HashMap<>();
+  // 映射列名
   private final Map<String, List<String>> mappedColumnNamesMap = new HashMap<>();
+  // 未映射列名
   private final Map<String, List<String>> unMappedColumnNamesMap = new HashMap<>();
 
   public ResultSetWrapper(ResultSet rs, Configuration configuration) throws SQLException {

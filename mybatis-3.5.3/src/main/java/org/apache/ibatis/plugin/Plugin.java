@@ -30,8 +30,11 @@ import org.apache.ibatis.reflection.ExceptionUtil;
  */
 public class Plugin implements InvocationHandler {
 
+  // 被代理对象
   private final Object target;
+  // 拦截器
   private final Interceptor interceptor;
+  //  要拦截的方法，从 @Signature 注解中提取出来的
   private final Map<Class<?>, Set<Method>> signatureMap;
 
   private Plugin(Object target, Interceptor interceptor, Map<Class<?>, Set<Method>> signatureMap) {

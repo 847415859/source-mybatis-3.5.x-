@@ -28,22 +28,19 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
+/**
+ * 参数解析器
+ */
 public class ParamNameResolver {
 
   private static final String GENERIC_NAME_PREFIX = "param";
 
   /**
-   * <p>
-   * The key is the index and the value is the name of the parameter.<br />
-   * The name is obtained from {@link Param} if specified. When {@link Param} is not specified,
-   * the parameter index is used. Note that this index could be different from the actual index
-   * when the method has special parameters (i.e. {@link RowBounds} or {@link ResultHandler}).
-   * </p>
-   * <ul>
-   * <li>aMethod(@Param("M") int a, @Param("N") int b) -&gt; {{0, "M"}, {1, "N"}}</li>
-   * <li>aMethod(int a, int b) -&gt; {{0, "0"}, {1, "1"}}</li>
-   * <li>aMethod(int a, RowBounds rb, int b) -&gt; {{0, "0"}, {2, "1"}}</li>
-   * </ul>
+   * 特殊参数（即RowBounds或ResultHandler）时，此索引可能与实际索引不同。
+   * aMethod（@Param（“M”）int a，@Param（“N”）int b）->｛｛0，“M”｝，｛1，“N”｝｝
+   * aMethod（int a，int b）->｛｛0，“0”｝，｛1，“1”｝｝
+   * aMethod（int a，RowBounds rb，int b）->｛｛0，“0”｝，｛2，“1”｝｝
+   *
    */
   private final SortedMap<Integer, String> names;
 
@@ -65,11 +62,13 @@ public class ParamNameResolver {
      */
     // get names from @Param annotations
     for (int paramIndex = 0; paramIndex < paramCount; paramIndex++) {
+      // 判断是否为特殊参数
       if (isSpecialParameter(paramTypes[paramIndex])) {
         // skip special parameters
         continue;
       }
       String name = null;
+      // 获取参数上的 @Param 注解配置的值
       for (Annotation annotation : paramAnnotations[paramIndex]) {
         if (annotation instanceof Param) {
           hasParamAnnotation = true;
@@ -77,10 +76,10 @@ public class ParamNameResolver {
           break;
         }
       }
+      // 如果属性上没有配置@Param注解，则使用默认的命名规则
       if (name == null) {
-        // @Param was not specified.
-        if (config.isUseActualParamName()) {
-          name = getActualParamName(method, paramIndex);
+        if (config.isUseActualParamName()) {  // 默认是true
+          name = getActualParamName(method, paramIndex);  // 则是参数列表 arg0,arg1  数字为参数索引的位置
         }
         if (name == null) {
           // use the parameter index as the name ("0", "1", ...)
@@ -101,6 +100,11 @@ public class ParamNameResolver {
     return ParamNameUtil.getParamNames(method).get(paramIndex);
   }
 
+  /**
+   * 判断是否为特殊参数
+   * @param clazz
+   * @return
+   */
   private static boolean isSpecialParameter(Class<?> clazz) {
     return RowBounds.class.isAssignableFrom(clazz) || ResultHandler.class.isAssignableFrom(clazz);
   }

@@ -23,10 +23,12 @@ import java.util.Map;
  */
 public class LanguageDriverRegistry {
 
+  // 语言驱动注册表，保存了所有可使用的语言驱动
   private final Map<Class<? extends LanguageDriver>, LanguageDriver> LANGUAGE_DRIVER_MAP = new HashMap<>();
-
+  // 默认语言驱动，在没有指定用什么语言驱动解析时，就会使用这个语言驱动
   private Class<? extends LanguageDriver> defaultDriverClass;
 
+  // 注册驱动到注册表中
   public void register(Class<? extends LanguageDriver> cls) {
     if (cls == null) {
       throw new IllegalArgumentException("null is not a valid Language Driver");
@@ -40,6 +42,7 @@ public class LanguageDriverRegistry {
     });
   }
 
+  // 注册驱动到注册表中
   public void register(LanguageDriver instance) {
     if (instance == null) {
       throw new IllegalArgumentException("null is not a valid Language Driver");
@@ -50,10 +53,12 @@ public class LanguageDriverRegistry {
     }
   }
 
+  // 从驱动表中获取驱动
   public LanguageDriver getDriver(Class<? extends LanguageDriver> cls) {
     return LANGUAGE_DRIVER_MAP.get(cls);
   }
 
+  // 获取默认驱动
   public LanguageDriver getDefaultDriver() {
     return getDriver(getDefaultDriverClass());
   }

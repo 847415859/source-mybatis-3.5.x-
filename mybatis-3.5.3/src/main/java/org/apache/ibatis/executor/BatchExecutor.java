@@ -41,8 +41,9 @@ import org.apache.ibatis.transaction.Transaction;
 public class BatchExecutor extends BaseExecutor {
 
   public static final int BATCH_UPDATE_RETURN_VALUE = Integer.MIN_VALUE + 1002;
-
+  // Statement集合
   private final List<Statement> statementList = new ArrayList<>();
+  // batch结果集合
   private final List<BatchResult> batchResultList = new ArrayList<>();
   private String currentSql;
   private MappedStatement currentStatement;
@@ -53,27 +54,35 @@ public class BatchExecutor extends BaseExecutor {
 
   @Override
   public int doUpdate(MappedStatement ms, Object parameterObject) throws SQLException {
+    // 获得配置信息
     final Configuration configuration = ms.getConfiguration();
+    // 获得StatementHandler
     final StatementHandler handler = configuration.newStatementHandler(this, ms, parameterObject, RowBounds.DEFAULT, null, null);
+    // 获得Sql语句
     final BoundSql boundSql = handler.getBoundSql();
     final String sql = boundSql.getSql();
     final Statement stmt;
+    // 如果sql语句等于当前sql MappedStatement 等于当前Map碰到Statement
     if (sql.equals(currentSql) && ms.equals(currentStatement)) {
       int last = statementList.size() - 1;
+      // 获得最后一个
       stmt = statementList.get(last);
       applyTransactionTimeout(stmt);
       handler.parameterize(stmt);//fix Issues 322
       BatchResult batchResult = batchResultList.get(last);
       batchResult.addParameterObject(parameterObject);
     } else {
+      // 如果不存在就创建一个批处理操作
       Connection connection = getConnection(ms.getStatementLog());
       stmt = handler.prepare(connection, transaction.getTimeout());
       handler.parameterize(stmt);    //fix Issues 322
       currentSql = sql;
       currentStatement = ms;
+      // 添加批量处理操作
       statementList.add(stmt);
       batchResultList.add(new BatchResult(ms, sql, parameterObject));
     }
+    // 最终是调用jdbc的批处理操作
     handler.batch(stmt);
     return BATCH_UPDATE_RETURN_VALUE;
   }
@@ -107,6 +116,7 @@ public class BatchExecutor extends BaseExecutor {
     return handler.queryCursor(stmt);
   }
 
+  // 刷新Statement，记录执行次数
   @Override
   public List<BatchResult> doFlushStatements(boolean isRollback) throws SQLException {
     try {
@@ -117,6 +127,7 @@ public class BatchExecutor extends BaseExecutor {
       for (int i = 0, n = statementList.size(); i < n; i++) {
         Statement stmt = statementList.get(i);
         applyTransactionTimeout(stmt);
+        // 记录批量处理执行操作的条数
         BatchResult batchResult = batchResultList.get(i);
         try {
           batchResult.setUpdateCounts(stmt.executeBatch());
@@ -147,6 +158,7 @@ public class BatchExecutor extends BaseExecutor {
           }
           throw new BatchExecutorException(message.toString(), e, results, batchResult);
         }
+        // 记录对象
         results.add(batchResult);
       }
       return results;

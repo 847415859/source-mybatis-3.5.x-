@@ -26,14 +26,23 @@ import org.apache.ibatis.session.Configuration;
 public class ForEachSqlNode implements SqlNode {
   public static final String ITEM_PREFIX = "__frch_";
 
+  // 表达式执行器
   private final ExpressionEvaluator evaluator;
+  // 集合表达式，存储 <foreach> 标签 collection 属性的值
   private final String collectionExpression;
+  // 当前节点
   private final SqlNode contents;
+  // 要添加的前缀
   private final String open;
+  // 要添加的后缀
   private final String close;
+  // 元素之间的分隔符
   private final String separator;
+  // 集合成员
   private final String item;
+  // 代表序号的名称
   private final String index;
+  // 全局配置信息
   private final Configuration configuration;
 
   public ForEachSqlNode(Configuration configuration, SqlNode contents, String collectionExpression, String index, String item, String open, String close, String separator) {
@@ -51,22 +60,26 @@ public class ForEachSqlNode implements SqlNode {
   @Override
   public boolean apply(DynamicContext context) {
     Map<String, Object> bindings = context.getBindings();
+    // 得到需要遍历的集合
     final Iterable<?> iterable = evaluator.evaluateIterable(collectionExpression, bindings);
     if (!iterable.iterator().hasNext()) {
       return true;
     }
     boolean first = true;
+    // 拼接前缀 '('
     applyOpen(context);
     int i = 0;
     for (Object o : iterable) {
       DynamicContext oldContext = context;
+      // 如果是一个或者没有分隔符则不需要添加前缀
       if (first || separator == null) {
         context = new PrefixedContext(context, "");
       } else {
         context = new PrefixedContext(context, separator);
       }
+      // 得到唯一数字
       int uniqueNumber = context.getUniqueNumber();
-      // Issue #709
+      // 如果类型是 Map.Entry
       if (o instanceof Map.Entry) {
         @SuppressWarnings("unchecked")
         Map.Entry<Object, Object> mapEntry = (Map.Entry<Object, Object>) o;
@@ -76,6 +89,7 @@ public class ForEachSqlNode implements SqlNode {
         applyIndex(context, i, uniqueNumber);
         applyItem(context, o, uniqueNumber);
       }
+      // // 拼接元素{__frch_id_uniqueNumber}
       contents.apply(new FilteredDynamicContext(configuration, context, index, item, uniqueNumber));
       if (first) {
         first = !((PrefixedContext) context).isPrefixApplied();
@@ -83,19 +97,28 @@ public class ForEachSqlNode implements SqlNode {
       context = oldContext;
       i++;
     }
+    // 拼接后缀 ')'
     applyClose(context);
     context.getBindings().remove(item);
     context.getBindings().remove(index);
     return true;
   }
 
+  // 添加变量
   private void applyIndex(DynamicContext context, Object o, int i) {
     if (index != null) {
+      /*
+        其实2 代码不难理解，稍微难以理解的可能是1 代码
+        因为在这个地方添加了值，在 foreach 节点处理完毕后又会把它删除
+        要知道如果是 "#{id}" 的话会被直接替换为 "#{__frch_id_index}"
+        但是如果是 ${id} 的话，就直接替换为具体的值，所以在这里添加的值其实是为了后面如果有声明了 ${id} 而准备的
+       */
       context.bind(index, o);
       context.bind(itemizeItem(index, i), o);
     }
   }
 
+  // // 添加变量
   private void applyItem(DynamicContext context, Object o, int i) {
     if (item != null) {
       context.bind(item, o);
@@ -115,16 +138,20 @@ public class ForEachSqlNode implements SqlNode {
     }
   }
 
+  // 生成唯一的名字
   private static String itemizeItem(String item, int i) {
     return ITEM_PREFIX + item + "_" + i;
   }
 
   private static class FilteredDynamicContext extends DynamicContext {
+    // 被代理对象
     private final DynamicContext delegate;
+    // 唯一的ID
     private final int index;
+    // 元素下标的名称
     private final String itemIndex;
+    // 元素名称
     private final String item;
-
     public FilteredDynamicContext(Configuration configuration,DynamicContext delegate, String itemIndex, String item, int i) {
       super(configuration, null);
       this.delegate = delegate;
@@ -150,6 +177,14 @@ public class ForEachSqlNode implements SqlNode {
 
     @Override
     public void appendSql(String sql) {
+       /*
+        假设写的是
+        <foreach collection="ids" open="(" close=")" separator="," item="id">
+         {id}
+        </foreach>
+        下面的代码的作用就是将{id} 替换为{__frch_id_index}
+        注：index是一个数字，代表序号
+       */
       GenericTokenParser parser = new GenericTokenParser("#{", "}", content -> {
         String newContent = content.replaceFirst("^\\s*" + item + "(?![^.,:\\s])", itemizeItem(item, index));
         if (itemIndex != null && newContent.equals(content)) {

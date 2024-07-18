@@ -21,7 +21,20 @@
         </where>
     </select>
 
-<!--    <update id="updateForName">-->
+
+    <select id="listAll" resultType="com.tuling.entity.User" parameterType="com.tuling.entity.User">
+        select * from t_user
+        <where>
+            <if test="userName != null">
+                and user_name like concat('%',#{userName},'%')
+            </if>
+            <if test="age != null">
+                and age=#{age}
+            </if>
+        </where>
+    </select>
+
+    <!--    <update id="updateForName">-->
 <!--        update t_user-->
 <!--        <set>-->
 <!--            ,user_name=#{arg1}-->

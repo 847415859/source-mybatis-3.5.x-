@@ -28,12 +28,17 @@ import org.apache.ibatis.session.Configuration;
  * @author Clinton Begin
  */
 public class TrimSqlNode implements SqlNode {
-
+  // 要处理 SQL 节点
   private final SqlNode contents;
+  // 要添加的前缀
   private final String prefix;
+  // 要添加的后缀
   private final String suffix;
+  // 要覆盖的前缀，入参是一个字符串，但是会按照 '|' 进行分割，也就是说其实可以声明需要覆盖的多个可能性
   private final List<String> prefixesToOverride;
+  // 要覆盖的后缀，入参是一个字符出，但是会按照 '|' 进行分割，也就是说其实可以声明需要覆盖的多个可能性
   private final List<String> suffixesToOverride;
+  // 全局配置信息
   private final Configuration configuration;
 
   public TrimSqlNode(Configuration configuration, SqlNode contents, String prefix, String prefixesToOverride, String suffix, String suffixesToOverride) {
@@ -76,9 +81,11 @@ public class TrimSqlNode implements SqlNode {
    * 比如 where  会调用此对象， 将动态处理里面的if条件， 如果满足条件就将sql追加到sqlBuffer
    */
   private class FilteredDynamicContext extends DynamicContext {
+    // 被代理的动态上下文
     private DynamicContext delegate;
     private boolean prefixApplied;
     private boolean suffixApplied;
+    // 暂存子节点处理生成的 SQL
     private StringBuilder sqlBuffer;
 
     public FilteredDynamicContext(DynamicContext delegate) {
@@ -91,7 +98,9 @@ public class TrimSqlNode implements SqlNode {
 
     public void applyAll() {
       sqlBuffer = new StringBuilder(sqlBuffer.toString().trim());
+      // 将 SQL 字符串大写，方便判断是否以指定的字符串开头或结束
       String trimmedUppercaseSql = sqlBuffer.toString().toUpperCase(Locale.ENGLISH); // 转换成大写
+      // 如果不为空才需要覆盖
       if (trimmedUppercaseSql.length() > 0) { // 如果trim(where、set)中有内容
         /**
          * 1. 处理prefixOverrides 前去除  如果<WHERE> prefixOverrides="and|or"

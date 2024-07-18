@@ -29,15 +29,22 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
 public class ParameterMapping {
 
   private Configuration configuration;
-
+  //{}中的属性 user.uid
   private String property;
+  // 参数模式 IN
   private ParameterMode mode;
+  // 参数类型 java.lang.Object
   private Class<?> javaType = Object.class;
+  // JdbcType 数据库数据类型
   private JdbcType jdbcType;
   private Integer numericScale;
+  // 类型处理器
   private TypeHandler<?> typeHandler;
+  // resultMap的ID
   private String resultMapId;
+  // JDBC类型名称
   private String jdbcTypeName;
+  // 表达式
   private String expression;
 
   private ParameterMapping() {
